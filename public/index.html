@@ -306,6 +306,7 @@
         <button id="toggleMic" class="btn-secondary" style="display: none;">🎤 Mic</button>
         <button id="toggleCam" class="btn-secondary" style="display: none;">📹 Camera</button>
         <button id="shareScreen" class="btn-warning" style="display: none;">🖥️ Share Screen</button>
+        <button id="retryConnection" class="btn-secondary" style="display: none;">🔄 Retry</button>
         <select id="cameraSelect" style="display: none;"></select>
         <select id="micSelect" style="display: none;"></select>
       </div>
@@ -331,6 +332,7 @@
       const toggleMicBtn = document.getElementById('toggleMic');
       const toggleCamBtn = document.getElementById('toggleCam');
       const shareScreenBtn = document.getElementById('shareScreen');
+      const retryConnectionBtn = document.getElementById('retryConnection');
       const roomIdInput = document.getElementById('roomId');
       const localVideo = document.getElementById('localVideo');
       const cameraSelect = document.getElementById('cameraSelect');
@@ -363,7 +365,7 @@
       }
 
       function showControls(show) {
-        const controls = [callBtn, hangupBtn, toggleMicBtn, toggleCamBtn, shareScreenBtn, cameraSelect, micSelect];
+        const controls = [callBtn, hangupBtn, toggleMicBtn, toggleCamBtn, shareScreenBtn, retryConnectionBtn, cameraSelect, micSelect];
         controls.forEach(el => el.style.display = show ? 'block' : 'none');
       }
 
@@ -425,10 +427,18 @@
         { urls: 'stun:stun.l.google.com:19302' },
         { urls: 'stun:stun1.l.google.com:19302' },
         { urls: 'stun:stun2.l.google.com:19302' },
-        // Public TURN for testing (unreliable; replace with your own in prod)
+        { urls: 'stun:stun3.l.google.com:19302' },
+        { urls: 'stun:stun4.l.google.com:19302' },
+        // Дополнительные STUN серверы
+        { urls: 'stun:stun.ekiga.net' },
+        { urls: 'stun:stun.ideasip.com' },
+        { urls: 'stun:stun.schlund.de' },
+        { urls: 'stun:stun.stunprotocol.org:3478' },
+        // Public TURN серверы (могут быть нестабильными)
         { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
         { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
-        { urls: 'turn:openrelay.metered.ca:3478', username: 'openrelayproject', credential: 'openrelayproject' }
+        { urls: 'turn:openrelay.metered.ca:3478', username: 'openrelayproject', credential: 'openrelayproject' },
+        { urls: 'turns:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' }
       ];
 
       async function listDevices() {
@@ -491,15 +501,36 @@
             updateStatus(`Connected to ${peers.size} peer(s)`, 'connected');
             showControls(true);
           }
-          if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
-            console.error(`WebRTC connection failed/disconnected with ${peerId}`);
-            // Не удаляем пира сразу, возможно это временная проблема
+          if (pc.connectionState === 'failed') {
+            console.error(`WebRTC connection failed with ${peerId}, removing peer`);
+            removePeer(peerId);
+          } else if (pc.connectionState === 'disconnected') {
+            console.error(`WebRTC connection disconnected with ${peerId}`);
             updateStatus(`Connection issues with ${peers.size} peer(s)`, '');
+            // Показываем кнопку retry
+            retryConnectionBtn.style.display = 'block';
           }
         };
         
         pc.oniceconnectionstatechange = () => {
           console.log(`pc.iceConnectionState with ${peerId}:`, pc.iceConnectionState);
+          
+          // Если ICE соединение застряло в checking более 10 секунд, переподключаемся
+          if (pc.iceConnectionState === 'checking') {
+            if (!peer.iceTimeout) {
+              peer.iceTimeout = setTimeout(() => {
+                if (pc.iceConnectionState === 'checking') {
+                  console.log(`ICE timeout for ${peerId}, restarting ICE...`);
+                  pc.restartIce();
+                }
+              }, 10000);
+            }
+          } else {
+            if (peer.iceTimeout) {
+              clearTimeout(peer.iceTimeout);
+              peer.iceTimeout = null;
+            }
+          }
         };
         
         pc.onicegatheringstatechange = () => {
@@ -561,6 +592,24 @@
         for (const peerId of peers.keys()) {
           await callPeer(peerId);
         }
+      }
+
+      async function retryConnections() {
+        console.log('Retrying all connections...');
+        updateStatus('Retrying connections...', 'connecting');
+        
+        // Закрываем все соединения и переподключаемся
+        hangup();
+        
+        // Ждем немного и переподключаемся
+        setTimeout(async () => {
+          if (peers.size === 0) {
+            // Если пиры есть в комнате, но соединения закрыты, добавляем их заново
+            socket.emit('join', roomId);
+          } else {
+            await call();
+          }
+        }, 1000);
       }
 
       async function handleSignal({ from, data }) {
@@ -729,6 +778,7 @@
       };
       callBtn.onclick = call;
       hangupBtn.onclick = hangup;
+      retryConnectionBtn.onclick = retryConnections;
 
       // ask for perms early
       // На некоторых браузерах (iOS/Safari) запрашивать доступ вне жеста пользователя нельзя —
