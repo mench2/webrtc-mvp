@@ -423,6 +423,8 @@
 
       const stunServers = [
         { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
         // Public TURN for testing (unreliable; replace with your own in prod)
         { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
         { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
@@ -461,7 +463,12 @@
       }
 
       function createPeerConnection(peerId) {
-        const pc = new RTCPeerConnection({ iceServers: [...stunServers] });
+        const pc = new RTCPeerConnection({ 
+          iceServers: [...stunServers],
+          iceCandidatePoolSize: 10,
+          bundlePolicy: 'max-bundle',
+          rtcpMuxPolicy: 'require'
+        });
         const remoteStream = new MediaStream();
         
         pc.onicecandidate = (e) => {
@@ -484,9 +491,10 @@
             updateStatus(`Connected to ${peers.size} peer(s)`, 'connected');
             showControls(true);
           }
-          if (pc.connectionState === 'failed') {
-            console.error(`WebRTC connection failed with ${peerId}`);
-            removePeer(peerId);
+          if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+            console.error(`WebRTC connection failed/disconnected with ${peerId}`);
+            // Не удаляем пира сразу, возможно это временная проблема
+            updateStatus(`Connection issues with ${peers.size} peer(s)`, '');
           }
         };
         
@@ -568,16 +576,31 @@
         
         if (data.sdp) {
           console.log(`Processing SDP from ${from}:`, data.sdp.type);
-          await peer.pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+          try {
+            await peer.pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
           if (data.sdp.type === 'offer') {
-            console.log(`Creating answer for ${from}`);
-            const answer = await peer.pc.createAnswer();
-            await peer.pc.setLocalDescription(answer);
-            socket.emit('signal', { to: from, data: { sdp: peer.pc.localDescription } });
-            console.log(`Answer sent to ${from}`);
+              console.log(`Creating answer for ${from}`);
+              const answer = await peer.pc.createAnswer();
+              await peer.pc.setLocalDescription(answer);
+              socket.emit('signal', { to: from, data: { sdp: peer.pc.localDescription } });
+              console.log(`Answer sent to ${from}`);
+            }
+          } catch (e) {
+            console.error(`Error processing SDP from ${from}:`, e);
+            // Если уже в stable состоянии, пропускаем
+            if (e.name === 'InvalidStateError' && e.message.includes('stable')) {
+              console.log(`Skipping duplicate SDP from ${from}`);
+              return;
+            }
+            throw e;
           }
         } else if (data.candidate) {
           try { 
+            // Не добавляем ICE кандидаты если соединение уже установлено
+            if (peer.pc.connectionState === 'connected' || peer.pc.connectionState === 'completed') {
+              console.log(`Skipping ICE candidate for ${from} - already connected`);
+              return;
+            }
             await peer.pc.addIceCandidate(new RTCIceCandidate(data.candidate)); 
             console.log(`ICE candidate added for ${from}`);
           } catch (e) { 
@@ -641,21 +664,23 @@
         // Добавляем всех существующих пиров
         peerList.forEach(peerId => addPeer(peerId));
         
-        // Автоматически инициируем звонок со всеми существующими пирами
-        setTimeout(async () => {
-          for (const peerId of peerList) {
-            if (peers.has(peerId)) {
-              await callPeer(peerId);
+        // Автоматически инициируем звонок только если мы первый в комнате
+        if (peerList.length > 0) {
+          setTimeout(async () => {
+            for (const peerId of peerList) {
+              if (peers.has(peerId)) {
+                await callPeer(peerId);
+              }
             }
-          }
-        }, 1000);
+          }, 1000);
+        }
       });
       
       socket.on('peer-joined', ({ socketId }) => {
         console.log('Peer joined:', socketId);
         addPeer(socketId);
         
-        // Автоматически инициируем звонок с новым пиром через небольшую задержку
+        // Новый пир инициирует звонок со всеми существующими пирами
         setTimeout(async () => {
           if (peers.has(socketId)) {
             await callPeer(socketId);
