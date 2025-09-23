@@ -490,6 +490,14 @@
           }
         };
         
+        pc.oniceconnectionstatechange = () => {
+          console.log(`pc.iceConnectionState with ${peerId}:`, pc.iceConnectionState);
+        };
+        
+        pc.onicegatheringstatechange = () => {
+          console.log(`pc.iceGatheringState with ${peerId}:`, pc.iceGatheringState);
+        };
+        
         if (localStream) {
           for (const track of localStream.getTracks()) {
             pc.addTrack(track, localStream);
@@ -503,8 +511,12 @@
       }
 
       function addPeer(peerId) {
-        if (peers.has(peerId)) return;
+        if (peers.has(peerId)) {
+          console.log(`Peer ${peerId} already exists`);
+          return;
+        }
         
+        console.log(`Adding peer ${peerId}`);
         const videoContainer = createRemoteVideoElement(peerId);
         videosGrid.appendChild(videoContainer);
         
@@ -512,6 +524,7 @@
         peers.set(peerId, { pc, remoteStream });
         
         updateVideoGridLayout();
+        console.log(`Peer ${peerId} added successfully`);
       }
 
       function removePeer(peerId) {
@@ -528,9 +541,11 @@
         const peer = peers.get(peerId);
         if (!peer) return;
         
+        console.log(`Calling peer ${peerId}...`);
         const offer = await peer.pc.createOffer();
         await peer.pc.setLocalDescription(offer);
         socket.emit('signal', { to: peerId, data: { sdp: peer.pc.localDescription } });
+        console.log(`Offer sent to ${peerId}`);
       }
 
       async function call() {
@@ -541,7 +556,10 @@
       }
 
       async function handleSignal({ from, data }) {
+        console.log(`Received signal from ${from}:`, data);
+        
         if (!peers.has(from)) {
+          console.log(`Adding new peer ${from}`);
           addPeer(from);
         }
         
@@ -549,17 +567,21 @@
         if (!peer) return;
         
         if (data.sdp) {
+          console.log(`Processing SDP from ${from}:`, data.sdp.type);
           await peer.pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
           if (data.sdp.type === 'offer') {
+            console.log(`Creating answer for ${from}`);
             const answer = await peer.pc.createAnswer();
             await peer.pc.setLocalDescription(answer);
             socket.emit('signal', { to: from, data: { sdp: peer.pc.localDescription } });
+            console.log(`Answer sent to ${from}`);
           }
         } else if (data.candidate) {
           try { 
             await peer.pc.addIceCandidate(new RTCIceCandidate(data.candidate)); 
+            console.log(`ICE candidate added for ${from}`);
           } catch (e) { 
-            console.warn(e); 
+            console.warn(`Failed to add ICE candidate for ${from}:`, e); 
           }
         }
       }
@@ -618,11 +640,27 @@
         console.log('Received peers list:', peerList);
         // Добавляем всех существующих пиров
         peerList.forEach(peerId => addPeer(peerId));
+        
+        // Автоматически инициируем звонок со всеми существующими пирами
+        setTimeout(async () => {
+          for (const peerId of peerList) {
+            if (peers.has(peerId)) {
+              await callPeer(peerId);
+            }
+          }
+        }, 1000);
       });
       
       socket.on('peer-joined', ({ socketId }) => {
         console.log('Peer joined:', socketId);
         addPeer(socketId);
+        
+        // Автоматически инициируем звонок с новым пиром через небольшую задержку
+        setTimeout(async () => {
+          if (peers.has(socketId)) {
+            await callPeer(socketId);
+          }
+        }, 1000);
       });
       
       socket.on('peer-left', ({ socketId }) => {
