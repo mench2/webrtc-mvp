@@ -600,33 +600,54 @@
       };
 
       socket.on('connect', () => {
-        updateStatus('Connected', 'connected');
+        updateStatus('Connected to server', 'connected');
         clearError();
+        console.log('Connected to signaling server');
       });
       socket.on('disconnect', () => {
-        updateStatus('Disconnected', '');
+        updateStatus('Disconnected from server', '');
         showControls(false);
+        console.log('Disconnected from signaling server');
       });
       socket.on('connect_error', (err) => { 
         updateStatus('Connection Error', '');
         showError('Failed to connect to signaling server');
-        console.warn(err); 
+        console.error('Connection error:', err); 
       });
       socket.on('peers-list', ({ peers: peerList }) => {
+        console.log('Received peers list:', peerList);
         // Добавляем всех существующих пиров
         peerList.forEach(peerId => addPeer(peerId));
       });
       
       socket.on('peer-joined', ({ socketId }) => {
+        console.log('Peer joined:', socketId);
         addPeer(socketId);
       });
       
       socket.on('peer-left', ({ socketId }) => {
+        console.log('Peer left:', socketId);
         removePeer(socketId);
       });
       socket.on('signal', handleSignal);
 
+      function leaveRoom() {
+        socket.emit('leave', roomId);
+        hangup();
+        updateRoomInfo('');
+        joinBtn.textContent = 'Join Room';
+        joinBtn.className = 'btn-primary';
+        roomIdInput.disabled = false;
+        updateStatus('Disconnected', '');
+        clearError();
+      }
+
       joinBtn.onclick = async () => {
+        if (joinBtn.textContent === 'Leave Room') {
+          leaveRoom();
+          return;
+        }
+
         roomId = roomIdInput.value || 'test';
         updateStatus('Joining...', 'connecting');
         try {
@@ -637,9 +658,10 @@
           joinBtn.textContent = 'Leave Room';
           joinBtn.className = 'btn-danger';
           roomIdInput.disabled = true;
+          updateStatus('Connected to room', 'connected');
         } catch (e) {
           updateStatus('Error', '');
-          // уже показали ошибку выше
+          showError(`Failed to join room: ${e.message}`);
         }
       };
       callBtn.onclick = call;

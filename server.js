@@ -38,6 +38,16 @@ io.on('connection', (socket) => {
     });
   });
 
+  socket.on('leave', (roomId) => {
+    const peers = roomIdToSocketIds.get(roomId);
+    if (peers) {
+      peers.delete(socket.id);
+      socket.to(roomId).emit('peer-left', { socketId: socket.id });
+      if (peers.size === 0) roomIdToSocketIds.delete(roomId);
+    }
+    socket.leave(roomId);
+  });
+
   socket.on('signal', ({ to, data }) => {
     if (to) io.to(to).emit('signal', { from: socket.id, data });
   });
