@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='8' fill='%2311aaff'/%3E%3C/svg%3E">
+    <title>WebRTC 1:1 MVP</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; padding: 16px; background: #0f172a; color: #e2e8f0; }
+      .wrap { max-width: 1100px; margin: 0 auto; }
+      header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+      input, button, select { padding: 8px 10px; border-radius: 8px; border: 1px solid #334155; background: #111827; color: #e5e7eb; }
+      button { cursor: pointer; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      video { width: 100%; background: #111827; border-radius: 12px; aspect-ratio: 16/9; }
+      .controls { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 16px; }
+      .status { font-size: 12px; color: #94a3b8; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <strong>WebRTC 1:1 MVP</strong>
+        <span class="status" id="status">disconnected</span>
+      </header>
+
+      <div class="controls">
+        <input id="roomId" placeholder="room id" />
+        <button id="joinBtn">Join</button>
+        <button id="callBtn">Call</button>
+        <button id="hangupBtn">Hang up</button>
+        <button id="toggleMic">Mic</button>
+        <button id="toggleCam">Cam</button>
+        <button id="shareScreen">Share Screen</button>
+        <select id="cameraSelect"></select>
+        <select id="micSelect"></select>
+      </div>
+      <div class="status" id="errors"></div>
+
+      <div class="grid">
+        <div>
+          <div class="status">Local</div>
+          <video id="localVideo" autoplay playsinline muted></video>
+        </div>
+        <div>
+          <div class="status">Remote</div>
+          <video id="remoteVideo" autoplay playsinline></video>
+        </div>
+      </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const statusEl = document.getElementById('status');
+      const joinBtn = document.getElementById('joinBtn');
+      const callBtn = document.getElementById('callBtn');
+      const hangupBtn = document.getElementById('hangupBtn');
+      const toggleMicBtn = document.getElementById('toggleMic');
+      const toggleCamBtn = document.getElementById('toggleCam');
+      const shareScreenBtn = document.getElementById('shareScreen');
+      const roomIdInput = document.getElementById('roomId');
+      const localVideo = document.getElementById('localVideo');
+      const remoteVideo = document.getElementById('remoteVideo');
+      const cameraSelect = document.getElementById('cameraSelect');
+      const micSelect = document.getElementById('micSelect');
+      const errorsEl = document.getElementById('errors');
+
+      const params = new URLSearchParams(window.location.search);
+      const SIGNAL_URL = params.get('signal') || window.location.origin;
+      const socket = io(SIGNAL_URL, {
+        transports: ['websocket'],
+        path: '/socket.io',
+        withCredentials: true,
+        timeout: 10000,
+        reconnection: true,
+        reconnectionAttempts: Infinity,
+        reconnectionDelay: 1000,
+      });
+
+      let roomId = '';
+      let otherPeerId = null;
+      let pc = null;
+      let remoteStream = null;
+      let localStream = null;
+
+      const stunServers = [
+        { urls: 'stun:stun.l.google.com:19302' },
+        // Public TURN for testing (unreliable; replace with your own in prod)
+        { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+        { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+        { urls: 'turn:openrelay.metered.ca:3478', username: 'openrelayproject', credential: 'openrelayproject' }
+      ];
+
+      async function listDevices() {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        cameraSelect.innerHTML = '';
+        micSelect.innerHTML = '';
+        for (const d of devices) {
+          const opt = document.createElement('option');
+          opt.value = d.deviceId;
+          opt.textContent = `${d.kind}: ${d.label || d.deviceId}`;
+          if (d.kind === 'videoinput') cameraSelect.appendChild(opt);
+          if (d.kind === 'audioinput') micSelect.appendChild(opt.cloneNode(true));
+        }
+      }
+
+      async function getLocalStream() {
+        const camId = cameraSelect.value || undefined;
+        const micId = micSelect.value || undefined;
+        try {
+          localStream = await navigator.mediaDevices.getUserMedia({
+            audio: micId ? { deviceId: { exact: micId } } : true,
+            video: camId ? { deviceId: { exact: camId } } : { width: 1280, height: 720 }
+          });
+          localVideo.srcObject = localStream;
+          errorsEl.textContent = '';
+        } catch (e) {
+          // Не блокируем соединение: позволим вкладке быть только «приёмником»
+          errorsEl.textContent = `Нет доступа к камере/микрофону: ${e && e.name ? e.name : e}`;
+          console.warn(e);
+          localStream = null;
+        }
+      }
+
+      function createPeerConnection() {
+        pc = new RTCPeerConnection({ iceServers: [...stunServers] });
+        pc.onicecandidate = (e) => {
+          if (e.candidate && otherPeerId) {
+            socket.emit('signal', { to: otherPeerId, data: { candidate: e.candidate } });
+          }
+        };
+        remoteStream = new MediaStream();
+        pc.ontrack = (e) => {
+          remoteStream.addTrack(e.track);
+          if (remoteVideo.srcObject !== remoteStream) {
+            remoteVideo.srcObject = remoteStream;
+          }
+        };
+        pc.onconnectionstatechange = () => {
+          console.log('pc.connectionState', pc.connectionState);
+          if (pc.connectionState === 'connected') statusEl.textContent = 'webrtc connected';
+          if (pc.connectionState === 'failed') statusEl.textContent = 'webrtc failed';
+        };
+        pc.oniceconnectionstatechange = () => {
+          console.log('pc.iceConnectionState', pc.iceConnectionState);
+        };
+        pc.onicegatheringstatechange = () => {
+          console.log('pc.iceGatheringState', pc.iceGatheringState);
+        };
+        if (localStream) {
+          for (const track of localStream.getTracks()) {
+            pc.addTrack(track, localStream);
+          }
+        } else {
+          // Эта вкладка только принимает медиа
+          pc.addTransceiver('video', { direction: 'recvonly' });
+          pc.addTransceiver('audio', { direction: 'recvonly' });
+        }
+      }
+
+      async function call() {
+        if (!pc) createPeerConnection();
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        socket.emit('signal', { to: otherPeerId, data: { sdp: pc.localDescription } });
+      }
+
+      async function handleSignal({ from, data }) {
+        otherPeerId = from;
+        if (!pc) createPeerConnection();
+        if (data.sdp) {
+          await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+          if (data.sdp.type === 'offer') {
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+            socket.emit('signal', { to: from, data: { sdp: pc.localDescription } });
+          }
+        } else if (data.candidate) {
+          try { await pc.addIceCandidate(new RTCIceCandidate(data.candidate)); } catch (e) { console.warn(e); }
+        }
+      }
+
+      function hangup() {
+        if (pc) { pc.getSenders().forEach(s => s.track && s.track.stop()); pc.close(); }
+        pc = null;
+        remoteVideo.srcObject = null;
+      }
+
+      toggleMicBtn.onclick = () => {
+        if (!localStream) return;
+        for (const t of localStream.getAudioTracks()) t.enabled = !t.enabled;
+      };
+      toggleCamBtn.onclick = () => {
+        if (!localStream) return;
+        for (const t of localStream.getVideoTracks()) t.enabled = !t.enabled;
+      };
+      shareScreenBtn.onclick = async () => {
+        if (!pc) return;
+        const screen = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+        const videoTrack = screen.getVideoTracks()[0];
+        const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+        if (sender) sender.replaceTrack(videoTrack);
+        videoTrack.onended = async () => {
+          const camTrack = localStream.getVideoTracks()[0];
+          if (sender && camTrack) sender.replaceTrack(camTrack);
+        };
+      };
+
+      socket.on('connect', () => statusEl.textContent = 'connected');
+      socket.on('disconnect', () => statusEl.textContent = 'disconnected');
+      socket.on('connect_error', (err) => { statusEl.textContent = 'connect error'; console.warn(err); });
+      socket.on('peers', async ({ otherPeerId: pid, initiator }) => {
+        otherPeerId = pid;
+        if (initiator && localStream) {
+          if (!pc) createPeerConnection();
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          socket.emit('signal', { to: otherPeerId, data: { sdp: pc.localDescription } });
+        }
+      });
+      socket.on('peer-joined', async ({ socketId, initiator }) => {
+        otherPeerId = socketId;
+        if (initiator && localStream) {
+          if (!pc) createPeerConnection();
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          socket.emit('signal', { to: otherPeerId, data: { sdp: pc.localDescription } });
+        }
+      });
+      socket.on('peer-left', () => { otherPeerId = null; hangup(); });
+      socket.on('signal', handleSignal);
+
+      joinBtn.onclick = async () => {
+        roomId = roomIdInput.value || 'test';
+        try {
+          await listDevices();
+          await getLocalStream(); // запросим доступ при клике (жест пользователя)
+          socket.emit('join', roomId);
+        } catch (e) {
+          // уже показали ошибку выше
+        }
+      };
+      callBtn.onclick = call;
+      hangupBtn.onclick = hangup;
+
+      // ask for perms early
+      // На некоторых браузерах (iOS/Safari) запрашивать доступ вне жеста пользователя нельзя —
+      // поэтому просто пытаемся получить список устройств. Запросим доступ при Join.
+      navigator.mediaDevices.enumerateDevices().then(() => {}).catch(() => {});
+    </script>
+  </body>
+  </html>
+
+
