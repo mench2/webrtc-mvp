@@ -179,12 +179,17 @@
         box-shadow: 0 8px 25px rgba(255, 165, 2, 0.4);
       }
       
-      .grid { 
+      .videos-grid { 
         display: grid; 
-        grid-template-columns: 1fr 1fr; 
         gap: 24px;
         margin-top: 32px;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       }
+      
+      .videos-grid.two-videos { grid-template-columns: 1fr 1fr; }
+      .videos-grid.three-videos { grid-template-columns: 1fr 1fr 1fr; }
+      .videos-grid.four-videos { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+      .videos-grid.five-plus-videos { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
       
       .video-container {
         position: relative;
@@ -254,7 +259,7 @@
       
       @media (max-width: 768px) {
         .wrap { padding: 20px; margin: 10px; }
-        .grid { grid-template-columns: 1fr; }
+        .videos-grid { grid-template-columns: 1fr !important; }
         .controls { flex-direction: column; }
         .controls button, .controls input, .controls select { width: 100%; }
         header { flex-direction: column; text-align: center; }
@@ -307,15 +312,12 @@
       
       <div id="errors"></div>
 
-      <div class="grid">
-        <div class="video-container">
+      <div class="videos-grid" id="videosGrid">
+        <div class="video-container local-video">
           <div class="video-label">Your Camera</div>
           <video id="localVideo" autoplay playsinline muted></video>
         </div>
-        <div class="video-container">
-          <div class="video-label">Remote Video</div>
-          <video id="remoteVideo" autoplay playsinline></video>
-        </div>
+        <!-- Remote videos will be added dynamically -->
       </div>
     </div>
 
@@ -331,12 +333,12 @@
       const shareScreenBtn = document.getElementById('shareScreen');
       const roomIdInput = document.getElementById('roomId');
       const localVideo = document.getElementById('localVideo');
-      const remoteVideo = document.getElementById('remoteVideo');
       const cameraSelect = document.getElementById('cameraSelect');
       const micSelect = document.getElementById('micSelect');
       const errorsEl = document.getElementById('errors');
       const roomInfo = document.getElementById('roomInfo');
       const currentRoom = document.getElementById('currentRoom');
+      const videosGrid = document.getElementById('videosGrid');
 
       const params = new URLSearchParams(window.location.search);
       const SIGNAL_URL = params.get('signal') || window.location.origin;
@@ -351,9 +353,7 @@
       });
 
       let roomId = '';
-      let otherPeerId = null;
-      let pc = null;
-      let remoteStream = null;
+      let peers = new Map(); // peerId -> { pc, remoteStream }
       let localStream = null;
 
       // UI State Management
@@ -382,6 +382,43 @@
 
       function clearError() {
         errorsEl.innerHTML = '';
+      }
+
+      function updateVideoGridLayout() {
+        const totalVideos = 1 + peers.size; // local + remote
+        videosGrid.className = 'videos-grid';
+        
+        if (totalVideos === 2) videosGrid.classList.add('two-videos');
+        else if (totalVideos === 3) videosGrid.classList.add('three-videos');
+        else if (totalVideos === 4) videosGrid.classList.add('four-videos');
+        else if (totalVideos >= 5) videosGrid.classList.add('five-plus-videos');
+      }
+
+      function createRemoteVideoElement(peerId) {
+        const videoContainer = document.createElement('div');
+        videoContainer.className = 'video-container remote-video';
+        videoContainer.id = `video-${peerId}`;
+        
+        const label = document.createElement('div');
+        label.className = 'video-label';
+        label.textContent = `Peer ${peerId.substring(0, 8)}`;
+        
+        const video = document.createElement('video');
+        video.autoplay = true;
+        video.playsInline = true;
+        video.id = `remoteVideo-${peerId}`;
+        
+        videoContainer.appendChild(label);
+        videoContainer.appendChild(video);
+        
+        return videoContainer;
+      }
+
+      function removeRemoteVideoElement(peerId) {
+        const videoContainer = document.getElementById(`video-${peerId}`);
+        if (videoContainer) {
+          videoContainer.remove();
+        }
       }
 
       const stunServers = [
@@ -423,77 +460,123 @@
         }
       }
 
-      function createPeerConnection() {
-        pc = new RTCPeerConnection({ iceServers: [...stunServers] });
+      function createPeerConnection(peerId) {
+        const pc = new RTCPeerConnection({ iceServers: [...stunServers] });
+        const remoteStream = new MediaStream();
+        
         pc.onicecandidate = (e) => {
-          if (e.candidate && otherPeerId) {
-            socket.emit('signal', { to: otherPeerId, data: { candidate: e.candidate } });
+          if (e.candidate) {
+            socket.emit('signal', { to: peerId, data: { candidate: e.candidate } });
           }
         };
-        remoteStream = new MediaStream();
+        
         pc.ontrack = (e) => {
           remoteStream.addTrack(e.track);
-          if (remoteVideo.srcObject !== remoteStream) {
+          const remoteVideo = document.getElementById(`remoteVideo-${peerId}`);
+          if (remoteVideo && remoteVideo.srcObject !== remoteStream) {
             remoteVideo.srcObject = remoteStream;
           }
         };
+        
         pc.onconnectionstatechange = () => {
-          console.log('pc.connectionState', pc.connectionState);
+          console.log(`pc.connectionState with ${peerId}:`, pc.connectionState);
           if (pc.connectionState === 'connected') {
-            updateStatus('Call Connected', 'connected');
+            updateStatus(`Connected to ${peers.size} peer(s)`, 'connected');
             showControls(true);
           }
           if (pc.connectionState === 'failed') {
-            updateStatus('Call Failed', '');
-            showError('WebRTC connection failed');
+            console.error(`WebRTC connection failed with ${peerId}`);
+            removePeer(peerId);
           }
         };
-        pc.oniceconnectionstatechange = () => {
-          console.log('pc.iceConnectionState', pc.iceConnectionState);
-        };
-        pc.onicegatheringstatechange = () => {
-          console.log('pc.iceGatheringState', pc.iceGatheringState);
-        };
+        
         if (localStream) {
           for (const track of localStream.getTracks()) {
             pc.addTrack(track, localStream);
           }
         } else {
-          // Эта вкладка только принимает медиа
           pc.addTransceiver('video', { direction: 'recvonly' });
           pc.addTransceiver('audio', { direction: 'recvonly' });
         }
+        
+        return { pc, remoteStream };
+      }
+
+      function addPeer(peerId) {
+        if (peers.has(peerId)) return;
+        
+        const videoContainer = createRemoteVideoElement(peerId);
+        videosGrid.appendChild(videoContainer);
+        
+        const { pc, remoteStream } = createPeerConnection(peerId);
+        peers.set(peerId, { pc, remoteStream });
+        
+        updateVideoGridLayout();
+      }
+
+      function removePeer(peerId) {
+        const peer = peers.get(peerId);
+        if (peer) {
+          peer.pc.close();
+          peers.delete(peerId);
+          removeRemoteVideoElement(peerId);
+          updateVideoGridLayout();
+        }
+      }
+
+      async function callPeer(peerId) {
+        const peer = peers.get(peerId);
+        if (!peer) return;
+        
+        const offer = await peer.pc.createOffer();
+        await peer.pc.setLocalDescription(offer);
+        socket.emit('signal', { to: peerId, data: { sdp: peer.pc.localDescription } });
       }
 
       async function call() {
-        if (!pc) createPeerConnection();
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        socket.emit('signal', { to: otherPeerId, data: { sdp: pc.localDescription } });
+        // Инициируем звонок со всеми пирами
+        for (const peerId of peers.keys()) {
+          await callPeer(peerId);
+        }
       }
 
       async function handleSignal({ from, data }) {
-        otherPeerId = from;
-        if (!pc) createPeerConnection();
+        if (!peers.has(from)) {
+          addPeer(from);
+        }
+        
+        const peer = peers.get(from);
+        if (!peer) return;
+        
         if (data.sdp) {
-          await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+          await peer.pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
           if (data.sdp.type === 'offer') {
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
-            socket.emit('signal', { to: from, data: { sdp: pc.localDescription } });
+            const answer = await peer.pc.createAnswer();
+            await peer.pc.setLocalDescription(answer);
+            socket.emit('signal', { to: from, data: { sdp: peer.pc.localDescription } });
           }
         } else if (data.candidate) {
-          try { await pc.addIceCandidate(new RTCIceCandidate(data.candidate)); } catch (e) { console.warn(e); }
+          try { 
+            await peer.pc.addIceCandidate(new RTCIceCandidate(data.candidate)); 
+          } catch (e) { 
+            console.warn(e); 
+          }
         }
       }
 
       function hangup() {
-        if (pc) { pc.getSenders().forEach(s => s.track && s.track.stop()); pc.close(); }
-        pc = null;
-        remoteVideo.srcObject = null;
+        // Закрываем все соединения с пирами
+        for (const [peerId, peer] of peers.entries()) {
+          peer.pc.getSenders().forEach(s => s.track && s.track.stop());
+          peer.pc.close();
+          removeRemoteVideoElement(peerId);
+        }
+        peers.clear();
+        
         showControls(false);
         updateStatus('Disconnected', '');
         clearError();
+        updateVideoGridLayout();
       }
 
       toggleMicBtn.onclick = () => {
@@ -529,25 +612,18 @@
         showError('Failed to connect to signaling server');
         console.warn(err); 
       });
-      socket.on('peers', async ({ otherPeerId: pid, initiator }) => {
-        otherPeerId = pid;
-        if (initiator && localStream) {
-          if (!pc) createPeerConnection();
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          socket.emit('signal', { to: otherPeerId, data: { sdp: pc.localDescription } });
-        }
+      socket.on('peers-list', ({ peers: peerList }) => {
+        // Добавляем всех существующих пиров
+        peerList.forEach(peerId => addPeer(peerId));
       });
-      socket.on('peer-joined', async ({ socketId, initiator }) => {
-        otherPeerId = socketId;
-        if (initiator && localStream) {
-          if (!pc) createPeerConnection();
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          socket.emit('signal', { to: otherPeerId, data: { sdp: pc.localDescription } });
-        }
+      
+      socket.on('peer-joined', ({ socketId }) => {
+        addPeer(socketId);
       });
-      socket.on('peer-left', () => { otherPeerId = null; hangup(); });
+      
+      socket.on('peer-left', ({ socketId }) => {
+        removePeer(socketId);
+      });
       socket.on('signal', handleSignal);
 
       joinBtn.onclick = async () => {

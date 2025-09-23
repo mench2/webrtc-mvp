@@ -24,11 +24,12 @@ io.on('connection', (socket) => {
     peers.add(socket.id);
     socket.join(roomId);
 
-    const otherPeerId = [...peers].find((id) => id !== socket.id) || null;
-    const initiator = otherPeerId !== null; // the second peer initiates
-    socket.emit('peers', { otherPeerId, initiator });
+    // Отправляем новому пиру список всех существующих пиров
+    const existingPeers = [...peers].filter(id => id !== socket.id);
+    socket.emit('peers-list', { peers: existingPeers });
 
-    socket.to(roomId).emit('peer-joined', { socketId: socket.id, initiator: false });
+    // Уведомляем всех существующих пиров о новом участнике
+    socket.to(roomId).emit('peer-joined', { socketId: socket.id });
 
     socket.on('disconnect', () => {
       peers.delete(socket.id);
