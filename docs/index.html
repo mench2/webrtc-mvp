@@ -312,6 +312,16 @@
       </div>
       
       <div id="errors"></div>
+      
+      <div id="connectionProgress" style="display: none; margin: 16px 0;">
+        <div style="background: rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 12px;">
+          <div style="font-size: 14px; margin-bottom: 8px;">Establishing connection...</div>
+          <div style="background: rgba(255, 255, 255, 0.2); border-radius: 4px; height: 6px; overflow: hidden;">
+            <div id="progressBar" style="background: linear-gradient(45deg, #4ecdc4, #44a08d); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+          </div>
+          <div id="progressText" style="font-size: 12px; margin-top: 8px; color: rgba(255, 255, 255, 0.7);">Gathering ICE candidates...</div>
+        </div>
+      </div>
 
       <div class="videos-grid" id="videosGrid">
         <div class="video-container local-video">
@@ -341,6 +351,9 @@
       const roomInfo = document.getElementById('roomInfo');
       const currentRoom = document.getElementById('currentRoom');
       const videosGrid = document.getElementById('videosGrid');
+      const connectionProgress = document.getElementById('connectionProgress');
+      const progressBar = document.getElementById('progressBar');
+      const progressText = document.getElementById('progressText');
 
       const params = new URLSearchParams(window.location.search);
       const SIGNAL_URL = params.get('signal') || window.location.origin;
@@ -384,6 +397,18 @@
 
       function clearError() {
         errorsEl.innerHTML = '';
+      }
+
+      function showProgress(show) {
+        connectionProgress.style.display = show ? 'block' : 'none';
+        if (!show) {
+          progressBar.style.width = '0%';
+        }
+      }
+
+      function updateProgress(percent, text) {
+        progressBar.style.width = percent + '%';
+        progressText.textContent = text;
       }
 
       function updateVideoGridLayout() {
@@ -434,11 +459,13 @@
         { urls: 'stun:stun.ideasip.com' },
         { urls: 'stun:stun.schlund.de' },
         { urls: 'stun:stun.stunprotocol.org:3478' },
-        // Public TURN серверы (могут быть нестабильными)
+        // Более быстрые TURN серверы
+        { urls: 'turn:freeturn.tel:3478', username: 'freeturn', credential: 'freeturn' },
+        { urls: 'turn:freeturn.tel:80', username: 'freeturn', credential: 'freeturn' },
+        { urls: 'turns:freeturn.tel:443', username: 'freeturn', credential: 'freeturn' },
+        // Резервные openrelay серверы
         { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
-        { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
-        { urls: 'turn:openrelay.metered.ca:3478', username: 'openrelayproject', credential: 'openrelayproject' },
-        { urls: 'turns:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' }
+        { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' }
       ];
 
       async function listDevices() {
@@ -477,7 +504,10 @@
           iceServers: [...stunServers],
           iceCandidatePoolSize: 10,
           bundlePolicy: 'max-bundle',
-          rtcpMuxPolicy: 'require'
+          rtcpMuxPolicy: 'require',
+          iceTransportPolicy: 'all',
+          iceConnectionReceivingTimeout: 5000,
+          iceBackupCandidatePairPingInterval: 2500
         });
         const remoteStream = new MediaStream();
         
@@ -497,13 +527,17 @@
         
         pc.onconnectionstatechange = () => {
           console.log(`pc.connectionState with ${peerId}:`, pc.connectionState);
-          if (pc.connectionState === 'connected') {
+          if (pc.connectionState === 'connecting') {
+            updateProgress(70, 'Connecting...');
+          } else if (pc.connectionState === 'connected') {
+            updateProgress(100, 'Connected!');
             updateStatus(`Connected to ${peers.size} peer(s)`, 'connected');
             showControls(true);
-          }
-          if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+            setTimeout(() => showProgress(false), 1000);
+          } else if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
             console.error(`WebRTC connection failed/disconnected with ${peerId}`);
             updateStatus(`Connection issues with ${peers.size} peer(s)`, '');
+            showProgress(false);
             // Не удаляем пира сразу, возможно это временная проблема
           }
         };
@@ -514,6 +548,11 @@
         
         pc.onicegatheringstatechange = () => {
           console.log(`pc.iceGatheringState with ${peerId}:`, pc.iceGatheringState);
+          if (pc.iceGatheringState === 'gathering') {
+            updateProgress(30, 'Gathering ICE candidates...');
+          } else if (pc.iceGatheringState === 'complete') {
+            updateProgress(60, 'ICE gathering complete, checking connectivity...');
+          }
         };
         
         if (localStream) {
@@ -535,6 +574,9 @@
         }
         
         console.log(`Adding peer ${peerId}`);
+        showProgress(true);
+        updateProgress(10, 'Creating connection...');
+        
         const videoContainer = createRemoteVideoElement(peerId);
         videosGrid.appendChild(videoContainer);
         
