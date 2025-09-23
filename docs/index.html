@@ -501,36 +501,15 @@
             updateStatus(`Connected to ${peers.size} peer(s)`, 'connected');
             showControls(true);
           }
-          if (pc.connectionState === 'failed') {
-            console.error(`WebRTC connection failed with ${peerId}, removing peer`);
-            removePeer(peerId);
-          } else if (pc.connectionState === 'disconnected') {
-            console.error(`WebRTC connection disconnected with ${peerId}`);
+          if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+            console.error(`WebRTC connection failed/disconnected with ${peerId}`);
             updateStatus(`Connection issues with ${peers.size} peer(s)`, '');
-            // Показываем кнопку retry
-            retryConnectionBtn.style.display = 'block';
+            // Не удаляем пира сразу, возможно это временная проблема
           }
         };
         
         pc.oniceconnectionstatechange = () => {
           console.log(`pc.iceConnectionState with ${peerId}:`, pc.iceConnectionState);
-          
-          // Если ICE соединение застряло в checking более 10 секунд, переподключаемся
-          if (pc.iceConnectionState === 'checking') {
-            if (!peer.iceTimeout) {
-              peer.iceTimeout = setTimeout(() => {
-                if (pc.iceConnectionState === 'checking') {
-                  console.log(`ICE timeout for ${peerId}, restarting ICE...`);
-                  pc.restartIce();
-                }
-              }, 10000);
-            }
-          } else {
-            if (peer.iceTimeout) {
-              clearTimeout(peer.iceTimeout);
-              peer.iceTimeout = null;
-            }
-          }
         };
         
         pc.onicegatheringstatechange = () => {
@@ -598,18 +577,9 @@
         console.log('Retrying all connections...');
         updateStatus('Retrying connections...', 'connecting');
         
-        // Закрываем все соединения и переподключаемся
-        hangup();
-        
-        // Ждем немного и переподключаемся
-        setTimeout(async () => {
-          if (peers.size === 0) {
-            // Если пиры есть в комнате, но соединения закрыты, добавляем их заново
-            socket.emit('join', roomId);
-          } else {
-            await call();
-          }
-        }, 1000);
+        // Просто перезапускаем звонки со всеми пирами
+        await call();
+        updateStatus('Retrying connections...', 'connecting');
       }
 
       async function handleSignal({ from, data }) {
@@ -645,11 +615,6 @@
           }
         } else if (data.candidate) {
           try { 
-            // Не добавляем ICE кандидаты если соединение уже установлено
-            if (peer.pc.connectionState === 'connected' || peer.pc.connectionState === 'completed') {
-              console.log(`Skipping ICE candidate for ${from} - already connected`);
-              return;
-            }
             await peer.pc.addIceCandidate(new RTCIceCandidate(data.candidate)); 
             console.log(`ICE candidate added for ${from}`);
           } catch (e) { 
