@@ -6,44 +6,314 @@
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='8' fill='%2311aaff'/%3E%3C/svg%3E">
     <title>WebRTC 1:1 MVP</title>
     <style>
-      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; padding: 16px; background: #0f172a; color: #e2e8f0; }
-      .wrap { max-width: 1100px; margin: 0 auto; }
-      header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-      input, button, select { padding: 8px 10px; border-radius: 8px; border: 1px solid #334155; background: #111827; color: #e5e7eb; }
-      button { cursor: pointer; }
-      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-      video { width: 100%; background: #111827; border-radius: 12px; aspect-ratio: 16/9; }
-      .controls { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 16px; }
-      .status { font-size: 12px; color: #94a3b8; }
+      * { box-sizing: border-box; }
+      
+      body { 
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+        margin: 0; 
+        padding: 20px; 
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        color: #ffffff;
+      }
+      
+      .wrap { 
+        max-width: 1200px; 
+        margin: 0 auto; 
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        padding: 32px;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      
+      header { 
+        display: flex; 
+        align-items: center; 
+        justify-content: space-between;
+        gap: 16px; 
+        margin-bottom: 32px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 24px;
+        font-weight: 700;
+        background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      
+      .status-indicator {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 500;
+      }
+      
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #ef4444;
+        transition: all 0.3s ease;
+      }
+      
+      .status-dot.connected { background: #10b981; }
+      .status-dot.connecting { background: #f59e0b; animation: pulse 2s infinite; }
+      
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+      
+      .controls { 
+        display: flex; 
+        gap: 12px; 
+        flex-wrap: wrap; 
+        margin: 24px 0 32px;
+        padding: 24px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      
+      input, select { 
+        padding: 12px 16px; 
+        border-radius: 12px; 
+        border: 1px solid rgba(255, 255, 255, 0.2); 
+        background: rgba(255, 255, 255, 0.1); 
+        color: #ffffff;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+      }
+      
+      input:focus, select:focus {
+        outline: none;
+        border-color: #4ecdc4;
+        box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.2);
+        background: rgba(255, 255, 255, 0.15);
+      }
+      
+      input::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+      }
+      
+      button { 
+        cursor: pointer;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      
+      .btn-primary {
+        background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+        color: white;
+        box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+      }
+      
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+      }
+      
+      .btn-secondary {
+        background: linear-gradient(45deg, #4ecdc4, #44a08d);
+        color: white;
+        box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+      }
+      
+      .btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(78, 205, 196, 0.4);
+      }
+      
+      .btn-danger {
+        background: linear-gradient(45deg, #ff4757, #c44569);
+        color: white;
+        box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
+      }
+      
+      .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(255, 71, 87, 0.4);
+      }
+      
+      .btn-success {
+        background: linear-gradient(45deg, #2ed573, #7bed9f);
+        color: white;
+        box-shadow: 0 4px 15px rgba(46, 213, 115, 0.3);
+      }
+      
+      .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(46, 213, 115, 0.4);
+      }
+      
+      .btn-warning {
+        background: linear-gradient(45deg, #ffa502, #ff6348);
+        color: white;
+        box-shadow: 0 4px 15px rgba(255, 165, 2, 0.3);
+      }
+      
+      .btn-warning:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(255, 165, 2, 0.4);
+      }
+      
+      .grid { 
+        display: grid; 
+        grid-template-columns: 1fr 1fr; 
+        gap: 24px;
+        margin-top: 32px;
+      }
+      
+      .video-container {
+        position: relative;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      
+      .video-label {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        z-index: 10;
+      }
+      
+      video { 
+        width: 100%; 
+        height: 300px;
+        object-fit: cover;
+        background: linear-gradient(45deg, #1a1a2e, #16213e);
+        border-radius: 20px;
+        transition: all 0.3s ease;
+      }
+      
+      .video-container:hover video {
+        transform: scale(1.02);
+      }
+      
+      .errors {
+        background: rgba(255, 71, 87, 0.1);
+        border: 1px solid rgba(255, 71, 87, 0.3);
+        color: #ff6b6b;
+        padding: 12px 16px;
+        border-radius: 12px;
+        margin: 16px 0;
+        font-size: 14px;
+        font-weight: 500;
+      }
+      
+      .room-info {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 16px 20px;
+        border-radius: 12px;
+        margin-bottom: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      
+      .room-id {
+        font-family: 'Monaco', 'Menlo', monospace;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 8px 12px;
+        border-radius: 8px;
+        display: inline-block;
+        margin-top: 8px;
+        font-weight: 600;
+      }
+      
+      @media (max-width: 768px) {
+        .wrap { padding: 20px; margin: 10px; }
+        .grid { grid-template-columns: 1fr; }
+        .controls { flex-direction: column; }
+        .controls button, .controls input, .controls select { width: 100%; }
+        header { flex-direction: column; text-align: center; }
+        video { height: 250px; }
+      }
+      
+      .loading {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+        animation: spin 1s ease-in-out infinite;
+      }
+      
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
     </style>
   </head>
   <body>
     <div class="wrap">
       <header>
-        <strong>WebRTC 1:1 MVP</strong>
-        <span class="status" id="status">disconnected</span>
+        <div class="logo">
+          📹 WebRTC Video Chat
+        </div>
+        <div class="status-indicator">
+          <div class="status-dot" id="statusDot"></div>
+          <span id="status">Disconnected</span>
+        </div>
       </header>
 
-      <div class="controls">
-        <input id="roomId" placeholder="room id" />
-        <button id="joinBtn">Join</button>
-        <button id="callBtn">Call</button>
-        <button id="hangupBtn">Hang up</button>
-        <button id="toggleMic">Mic</button>
-        <button id="toggleCam">Cam</button>
-        <button id="shareScreen">Share Screen</button>
-        <select id="cameraSelect"></select>
-        <select id="micSelect"></select>
+      <div class="room-info" id="roomInfo" style="display: none;">
+        <div style="font-weight: 600; margin-bottom: 8px;">Connected to room:</div>
+        <div class="room-id" id="currentRoom"></div>
       </div>
-      <div class="status" id="errors"></div>
+
+      <div class="controls">
+        <input id="roomId" placeholder="Enter room ID..." style="flex: 1;" />
+        <button id="joinBtn" class="btn-primary">Join Room</button>
+        <button id="callBtn" class="btn-success" style="display: none;">Start Call</button>
+        <button id="hangupBtn" class="btn-danger" style="display: none;">End Call</button>
+        <button id="toggleMic" class="btn-secondary" style="display: none;">🎤 Mic</button>
+        <button id="toggleCam" class="btn-secondary" style="display: none;">📹 Camera</button>
+        <button id="shareScreen" class="btn-warning" style="display: none;">🖥️ Share Screen</button>
+        <select id="cameraSelect" style="display: none;"></select>
+        <select id="micSelect" style="display: none;"></select>
+      </div>
+      
+      <div id="errors"></div>
 
       <div class="grid">
-        <div>
-          <div class="status">Local</div>
+        <div class="video-container">
+          <div class="video-label">Your Camera</div>
           <video id="localVideo" autoplay playsinline muted></video>
         </div>
-        <div>
-          <div class="status">Remote</div>
+        <div class="video-container">
+          <div class="video-label">Remote Video</div>
           <video id="remoteVideo" autoplay playsinline></video>
         </div>
       </div>
@@ -52,6 +322,7 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
       const statusEl = document.getElementById('status');
+      const statusDot = document.getElementById('statusDot');
       const joinBtn = document.getElementById('joinBtn');
       const callBtn = document.getElementById('callBtn');
       const hangupBtn = document.getElementById('hangupBtn');
@@ -64,6 +335,8 @@
       const cameraSelect = document.getElementById('cameraSelect');
       const micSelect = document.getElementById('micSelect');
       const errorsEl = document.getElementById('errors');
+      const roomInfo = document.getElementById('roomInfo');
+      const currentRoom = document.getElementById('currentRoom');
 
       const params = new URLSearchParams(window.location.search);
       const SIGNAL_URL = params.get('signal') || window.location.origin;
@@ -82,6 +355,34 @@
       let pc = null;
       let remoteStream = null;
       let localStream = null;
+
+      // UI State Management
+      function updateStatus(status, dotClass = '') {
+        statusEl.textContent = status;
+        statusDot.className = `status-dot ${dotClass}`;
+      }
+
+      function showControls(show) {
+        const controls = [callBtn, hangupBtn, toggleMicBtn, toggleCamBtn, shareScreenBtn, cameraSelect, micSelect];
+        controls.forEach(el => el.style.display = show ? 'block' : 'none');
+      }
+
+      function updateRoomInfo(room) {
+        if (room) {
+          roomInfo.style.display = 'block';
+          currentRoom.textContent = room;
+        } else {
+          roomInfo.style.display = 'none';
+        }
+      }
+
+      function showError(message) {
+        errorsEl.innerHTML = `<div class="errors">${message}</div>`;
+      }
+
+      function clearError() {
+        errorsEl.innerHTML = '';
+      }
 
       const stunServers = [
         { urls: 'stun:stun.l.google.com:19302' },
@@ -113,10 +414,10 @@
             video: camId ? { deviceId: { exact: camId } } : { width: 1280, height: 720 }
           });
           localVideo.srcObject = localStream;
-          errorsEl.textContent = '';
+          clearError();
         } catch (e) {
           // Не блокируем соединение: позволим вкладке быть только «приёмником»
-          errorsEl.textContent = `Нет доступа к камере/микрофону: ${e && e.name ? e.name : e}`;
+          showError(`Нет доступа к камере/микрофону: ${e && e.name ? e.name : e}`);
           console.warn(e);
           localStream = null;
         }
@@ -138,8 +439,14 @@
         };
         pc.onconnectionstatechange = () => {
           console.log('pc.connectionState', pc.connectionState);
-          if (pc.connectionState === 'connected') statusEl.textContent = 'webrtc connected';
-          if (pc.connectionState === 'failed') statusEl.textContent = 'webrtc failed';
+          if (pc.connectionState === 'connected') {
+            updateStatus('Call Connected', 'connected');
+            showControls(true);
+          }
+          if (pc.connectionState === 'failed') {
+            updateStatus('Call Failed', '');
+            showError('WebRTC connection failed');
+          }
         };
         pc.oniceconnectionstatechange = () => {
           console.log('pc.iceConnectionState', pc.iceConnectionState);
@@ -184,6 +491,9 @@
         if (pc) { pc.getSenders().forEach(s => s.track && s.track.stop()); pc.close(); }
         pc = null;
         remoteVideo.srcObject = null;
+        showControls(false);
+        updateStatus('Disconnected', '');
+        clearError();
       }
 
       toggleMicBtn.onclick = () => {
@@ -206,9 +516,19 @@
         };
       };
 
-      socket.on('connect', () => statusEl.textContent = 'connected');
-      socket.on('disconnect', () => statusEl.textContent = 'disconnected');
-      socket.on('connect_error', (err) => { statusEl.textContent = 'connect error'; console.warn(err); });
+      socket.on('connect', () => {
+        updateStatus('Connected', 'connected');
+        clearError();
+      });
+      socket.on('disconnect', () => {
+        updateStatus('Disconnected', '');
+        showControls(false);
+      });
+      socket.on('connect_error', (err) => { 
+        updateStatus('Connection Error', '');
+        showError('Failed to connect to signaling server');
+        console.warn(err); 
+      });
       socket.on('peers', async ({ otherPeerId: pid, initiator }) => {
         otherPeerId = pid;
         if (initiator && localStream) {
@@ -232,11 +552,17 @@
 
       joinBtn.onclick = async () => {
         roomId = roomIdInput.value || 'test';
+        updateStatus('Joining...', 'connecting');
         try {
           await listDevices();
           await getLocalStream(); // запросим доступ при клике (жест пользователя)
           socket.emit('join', roomId);
+          updateRoomInfo(roomId);
+          joinBtn.textContent = 'Leave Room';
+          joinBtn.className = 'btn-danger';
+          roomIdInput.disabled = true;
         } catch (e) {
+          updateStatus('Error', '');
           // уже показали ошибку выше
         }
       };
