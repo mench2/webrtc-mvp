@@ -194,6 +194,10 @@
         overflow: hidden;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
         border: 1px solid #2a2a2a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 200px;
       }
       
       .video-label {
@@ -214,8 +218,10 @@
       
       video { 
         width: 100%; 
-        height: 300px;
-        object-fit: cover;
+        height: auto;
+        min-height: 200px;
+        max-height: 400px;
+        object-fit: contain;
         background: #0f0f0f;
         border-radius: 12px;
         transition: all 0.2s ease;
@@ -262,7 +268,7 @@
         .controls { flex-direction: column; padding: 16px; }
         .controls button, .controls input, .controls select { width: 100%; margin-bottom: 8px; }
         header { flex-direction: column; text-align: center; gap: 12px; }
-        video { height: 200px; }
+        video { min-height: 180px; max-height: 250px; }
         .logo { font-size: 20px; }
         .status-indicator { font-size: 13px; }
       }
@@ -270,7 +276,7 @@
       @media (max-width: 480px) {
         body { padding: 4px; }
         .wrap { padding: 12px; border-radius: 8px; }
-        video { height: 180px; }
+        video { min-height: 160px; max-height: 200px; }
         .controls { padding: 12px; }
         .controls button, .controls input, .controls select { padding: 10px 12px; }
       }
