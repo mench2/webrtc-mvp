@@ -506,8 +506,9 @@
           bundlePolicy: 'max-bundle',
           rtcpMuxPolicy: 'require',
           iceTransportPolicy: 'all',
-          iceConnectionReceivingTimeout: 5000,
-          iceBackupCandidatePairPingInterval: 2500
+          iceConnectionReceivingTimeout: 10000,
+          iceBackupCandidatePairPingInterval: 1000,
+          continualGatheringPolicy: 'gather_continually'
         });
         const remoteStream = new MediaStream();
         
@@ -544,6 +545,11 @@
         
         pc.oniceconnectionstatechange = () => {
           console.log(`pc.iceConnectionState with ${peerId}:`, pc.iceConnectionState);
+          if (pc.iceConnectionState === 'failed') {
+            console.error(`ICE connection failed for ${peerId}`);
+            // Попробуем перезапустить ICE
+            pc.restartIce();
+          }
         };
         
         pc.onicegatheringstatechange = () => {
@@ -720,11 +726,12 @@
         // Добавляем всех существующих пиров
         peerList.forEach(peerId => addPeer(peerId));
         
-        // Автоматически инициируем звонок только если мы первый в комнате
+        // Инициируем звонок только если наш socket.id лексикографически меньше
+        // Это гарантирует, что только один клиент инициирует звонок
         if (peerList.length > 0) {
           setTimeout(async () => {
             for (const peerId of peerList) {
-              if (peers.has(peerId)) {
+              if (peers.has(peerId) && socket.id < peerId) {
                 await callPeer(peerId);
               }
             }
@@ -736,9 +743,9 @@
         console.log('Peer joined:', socketId);
         addPeer(socketId);
         
-        // Новый пир инициирует звонок со всеми существующими пирами
+        // Новый пир инициирует звонок только если его ID меньше
         setTimeout(async () => {
-          if (peers.has(socketId)) {
+          if (peers.has(socketId) && socket.id < socketId) {
             await callPeer(socketId);
           }
         }, 1000);
