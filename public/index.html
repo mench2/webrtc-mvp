@@ -9,10 +9,10 @@
       * { box-sizing: border-box; }
       
       body { 
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; 
         margin: 0; 
-        padding: 20px; 
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 16px; 
+        background: #0f0f0f;
         min-height: 100vh;
         color: #ffffff;
       }
@@ -20,12 +20,11 @@
       .wrap { 
         max-width: 1200px; 
         margin: 0 auto; 
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(20px);
-        border-radius: 24px;
-        padding: 32px;
-        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: #1a1a1a;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        border: 1px solid #2a2a2a;
       }
       
       header { 
@@ -33,9 +32,9 @@
         align-items: center; 
         justify-content: space-between;
         gap: 16px; 
-        margin-bottom: 32px;
-        padding-bottom: 20px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #2a2a2a;
       }
       
       .logo {
@@ -44,10 +43,7 @@
         gap: 12px;
         font-size: 24px;
         font-weight: 700;
-        background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        color: #ffffff;
       }
       
       .status-indicator {
@@ -55,22 +51,23 @@
         align-items: center;
         gap: 8px;
         padding: 8px 16px;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 20px;
+        background: #2a2a2a;
+        border-radius: 12px;
         font-size: 14px;
         font-weight: 500;
+        border: 1px solid #3a3a3a;
       }
       
       .status-dot {
         width: 8px;
         height: 8px;
         border-radius: 50%;
-        background: #ef4444;
+        background: #dc2626;
         transition: all 0.3s ease;
       }
       
-      .status-dot.connected { background: #10b981; }
-      .status-dot.connecting { background: #f59e0b; animation: pulse 2s infinite; }
+      .status-dot.connected { background: #16a34a; }
+      .status-dot.connecting { background: #d97706; animation: pulse 2s infinite; }
       
       @keyframes pulse {
         0%, 100% { opacity: 1; }
@@ -81,109 +78,108 @@
         display: flex; 
         gap: 12px; 
         flex-wrap: wrap; 
-        margin: 24px 0 32px;
-        padding: 24px;
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        margin: 20px 0 24px;
+        padding: 20px;
+        background: #1e1e1e;
+        border-radius: 12px;
+        border: 1px solid #2a2a2a;
       }
       
       input, select { 
         padding: 12px 16px; 
-        border-radius: 12px; 
-        border: 1px solid rgba(255, 255, 255, 0.2); 
-        background: rgba(255, 255, 255, 0.1); 
+        border-radius: 8px; 
+        border: 1px solid #3a3a3a; 
+        background: #2a2a2a; 
         color: #ffffff;
         font-size: 14px;
-        transition: all 0.3s ease;
-        backdrop-filter: blur(10px);
+        transition: all 0.2s ease;
       }
       
       input:focus, select:focus {
         outline: none;
-        border-color: #4ecdc4;
-        box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.2);
-        background: rgba(255, 255, 255, 0.15);
+        border-color: #5865f2;
+        box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.3);
+        background: #323232;
       }
       
       input::placeholder {
-        color: rgba(255, 255, 255, 0.6);
+        color: #8a8a8a;
       }
       
       button { 
         cursor: pointer;
         padding: 12px 20px;
         border: none;
-        border-radius: 12px;
+        border-radius: 8px;
         font-size: 14px;
         font-weight: 600;
-        transition: all 0.3s ease;
+        transition: all 0.2s ease;
         position: relative;
         overflow: hidden;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        text-transform: none;
+        letter-spacing: 0;
       }
       
       .btn-primary {
-        background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+        background: #5865f2;
         color: white;
-        box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        border: 1px solid #4752c4;
       }
       
       .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+        background: #4752c4;
+        transform: translateY(-1px);
       }
       
       .btn-secondary {
-        background: linear-gradient(45deg, #4ecdc4, #44a08d);
+        background: #4f545c;
         color: white;
-        box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+        border: 1px solid #5d6269;
       }
       
       .btn-secondary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(78, 205, 196, 0.4);
+        background: #5d6269;
+        transform: translateY(-1px);
       }
       
       .btn-danger {
-        background: linear-gradient(45deg, #ff4757, #c44569);
+        background: #ed4245;
         color: white;
-        box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
+        border: 1px solid #c23e41;
       }
       
       .btn-danger:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(255, 71, 87, 0.4);
+        background: #c23e41;
+        transform: translateY(-1px);
       }
       
       .btn-success {
-        background: linear-gradient(45deg, #2ed573, #7bed9f);
+        background: #3ba55d;
         color: white;
-        box-shadow: 0 4px 15px rgba(46, 213, 115, 0.3);
+        border: 1px solid #2d7d46;
       }
       
       .btn-success:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(46, 213, 115, 0.4);
+        background: #2d7d46;
+        transform: translateY(-1px);
       }
       
       .btn-warning {
-        background: linear-gradient(45deg, #ffa502, #ff6348);
+        background: #faa61a;
         color: white;
-        box-shadow: 0 4px 15px rgba(255, 165, 2, 0.3);
+        border: 1px solid #e0951a;
       }
       
       .btn-warning:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(255, 165, 2, 0.4);
+        background: #e0951a;
+        transform: translateY(-1px);
       }
       
       .videos-grid { 
         display: grid; 
-        gap: 24px;
-        margin-top: 32px;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 16px;
+        margin-top: 24px;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       }
       
       .videos-grid.two-videos { grid-template-columns: 1fr 1fr; }
@@ -193,86 +189,99 @@
       
       .video-container {
         position: relative;
-        background: rgba(0, 0, 0, 0.3);
-        border-radius: 20px;
+        background: #1a1a1a;
+        border-radius: 12px;
         overflow: hidden;
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        border: 1px solid #2a2a2a;
       }
       
       .video-label {
         position: absolute;
-        top: 16px;
-        left: 16px;
-        background: rgba(0, 0, 0, 0.7);
+        top: 12px;
+        left: 12px;
+        background: rgba(0, 0, 0, 0.8);
         color: white;
-        padding: 8px 12px;
-        border-radius: 8px;
+        padding: 6px 10px;
+        border-radius: 6px;
         font-size: 12px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        font-weight: 500;
+        text-transform: none;
+        letter-spacing: 0;
         z-index: 10;
+        backdrop-filter: blur(4px);
       }
       
       video { 
         width: 100%; 
         height: 300px;
         object-fit: cover;
-        background: linear-gradient(45deg, #1a1a2e, #16213e);
-        border-radius: 20px;
-        transition: all 0.3s ease;
+        background: #0f0f0f;
+        border-radius: 12px;
+        transition: all 0.2s ease;
       }
       
       .video-container:hover video {
-        transform: scale(1.02);
+        transform: scale(1.01);
       }
       
       .errors {
-        background: rgba(255, 71, 87, 0.1);
-        border: 1px solid rgba(255, 71, 87, 0.3);
-        color: #ff6b6b;
+        background: #2d1b1b;
+        border: 1px solid #5c1a1a;
+        color: #f85149;
         padding: 12px 16px;
-        border-radius: 12px;
+        border-radius: 8px;
         margin: 16px 0;
         font-size: 14px;
         font-weight: 500;
       }
       
       .room-info {
-        background: rgba(255, 255, 255, 0.05);
+        background: #1e1e1e;
         padding: 16px 20px;
-        border-radius: 12px;
-        margin-bottom: 24px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border: 1px solid #2a2a2a;
       }
       
       .room-id {
-        font-family: 'Monaco', 'Menlo', monospace;
-        background: rgba(255, 255, 255, 0.1);
+        font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+        background: #2a2a2a;
         padding: 8px 12px;
-        border-radius: 8px;
+        border-radius: 6px;
         display: inline-block;
         margin-top: 8px;
-        font-weight: 600;
+        font-weight: 500;
+        color: #8a8a8a;
       }
       
       @media (max-width: 768px) {
-        .wrap { padding: 20px; margin: 10px; }
-        .videos-grid { grid-template-columns: 1fr !important; }
-        .controls { flex-direction: column; }
-        .controls button, .controls input, .controls select { width: 100%; }
-        header { flex-direction: column; text-align: center; }
-        video { height: 250px; }
+        body { padding: 8px; }
+        .wrap { padding: 16px; margin: 0; border-radius: 12px; }
+        .videos-grid { grid-template-columns: 1fr !important; gap: 12px; }
+        .controls { flex-direction: column; padding: 16px; }
+        .controls button, .controls input, .controls select { width: 100%; margin-bottom: 8px; }
+        header { flex-direction: column; text-align: center; gap: 12px; }
+        video { height: 200px; }
+        .logo { font-size: 20px; }
+        .status-indicator { font-size: 13px; }
+      }
+      
+      @media (max-width: 480px) {
+        body { padding: 4px; }
+        .wrap { padding: 12px; border-radius: 8px; }
+        video { height: 180px; }
+        .controls { padding: 12px; }
+        .controls button, .controls input, .controls select { padding: 10px 12px; }
       }
       
       .loading {
         display: inline-block;
         width: 16px;
         height: 16px;
-        border: 2px solid rgba(255, 255, 255, 0.3);
+        border: 2px solid #3a3a3a;
         border-radius: 50%;
-        border-top-color: #fff;
+        border-top-color: #5865f2;
         animation: spin 1s ease-in-out infinite;
       }
       
@@ -285,7 +294,7 @@
     <div class="wrap">
       <header>
         <div class="logo">
-          📹 Video Chat
+          🎥 Video Chat
         </div>
         <div class="status-indicator">
           <div class="status-dot" id="statusDot"></div>
@@ -314,12 +323,12 @@
       <div id="errors"></div>
       
       <div id="connectionProgress" style="display: none; margin: 16px 0;">
-        <div style="background: rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 12px;">
-          <div style="font-size: 14px; margin-bottom: 8px;">Establishing connection...</div>
-          <div style="background: rgba(255, 255, 255, 0.2); border-radius: 4px; height: 6px; overflow: hidden;">
-            <div id="progressBar" style="background: linear-gradient(45deg, #4ecdc4, #44a08d); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+        <div style="background: #1e1e1e; border-radius: 8px; padding: 12px; border: 1px solid #2a2a2a;">
+          <div style="font-size: 14px; margin-bottom: 8px; color: #ffffff;">Establishing connection...</div>
+          <div style="background: #2a2a2a; border-radius: 4px; height: 6px; overflow: hidden;">
+            <div id="progressBar" style="background: #5865f2; height: 100%; width: 0%; transition: width 0.3s ease;"></div>
           </div>
-          <div id="progressText" style="font-size: 12px; margin-top: 8px; color: rgba(255, 255, 255, 0.7);">Gathering ICE candidates...</div>
+          <div id="progressText" style="font-size: 12px; margin-top: 8px; color: #8a8a8a;">Gathering ICE candidates...</div>
         </div>
       </div>
 
