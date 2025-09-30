@@ -1130,16 +1130,16 @@
         }
         
         const audioTracks = localStream.getAudioTracks();
-        const isMuted = audioTracks.every(t => !t.enabled);
+        const isAudioEnabled = audioTracks.some(t => t.enabled);
         
         // Переключаем состояние треков
-        for (const t of audioTracks) t.enabled = !isMuted;
+        for (const t of audioTracks) t.enabled = !isAudioEnabled;
         
         // Обновляем визуальное состояние кнопок
         updateButtonStates();
         const micLabel = document.getElementById('micLabel');
         if (micLabel) {
-          micLabel.textContent = isMuted ? 'Unmute' : 'Mute';
+          micLabel.textContent = isAudioEnabled ? 'Unmute' : 'Mute';
         }
         updateParticipantsList();
       };
@@ -1152,10 +1152,10 @@
         }
         
         const videoTracks = localStream.getVideoTracks();
-        const isVideoOff = videoTracks.every(t => !t.enabled);
+        const isVideoEnabled = videoTracks.some(t => t.enabled);
         
         // Переключаем состояние треков
-        for (const t of videoTracks) t.enabled = !isVideoOff;
+        for (const t of videoTracks) t.enabled = !isVideoEnabled;
         
         // Обновляем визуальное состояние кнопок
         updateButtonStates();

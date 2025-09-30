@@ -1092,10 +1092,10 @@
         }
         
         const audioTracks = localStream.getAudioTracks();
-        const isMuted = audioTracks.every(t => !t.enabled);
+        const isAudioEnabled = audioTracks.some(t => t.enabled);
         
         // Переключаем состояние треков
-        for (const t of audioTracks) t.enabled = !isMuted;
+        for (const t of audioTracks) t.enabled = !isAudioEnabled;
         
         // Обновляем визуальное состояние кнопок
         updateButtonStates();
@@ -1110,10 +1110,10 @@
         }
         
         const videoTracks = localStream.getVideoTracks();
-        const isVideoOff = videoTracks.every(t => !t.enabled);
+        const isVideoEnabled = videoTracks.some(t => t.enabled);
         
         // Переключаем состояние треков
-        for (const t of videoTracks) t.enabled = !isVideoOff;
+        for (const t of videoTracks) t.enabled = !isVideoEnabled;
         
         // Обновляем визуальное состояние кнопок
         updateButtonStates();
