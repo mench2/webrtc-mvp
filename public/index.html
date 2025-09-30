@@ -760,11 +760,69 @@
           });
           localVideo.srcObject = localStream;
           clearError();
+          
+          // Обновляем состояние кнопок после получения стрима
+          updateButtonStates();
         } catch (e) {
           // Не блокируем соединение: позволим вкладке быть только «приёмником»
           showError(`Нет доступа к камере/микрофону: ${e && e.name ? e.name : e}`);
           console.warn(e);
           localStream = null;
+          
+          // Обновляем кнопки для состояния без стрима
+          updateButtonStates();
+        }
+      }
+      
+      function updateButtonStates() {
+        if (!localStream) {
+          // Нет стрима - кнопки в выключенном состоянии
+          toggleMicBtn.className = 'control-btn mic';
+          toggleCamBtn.className = 'control-btn video';
+          
+          // Иконки выключенных устройств
+          const micIcon = toggleMicBtn.querySelector('svg');
+          const camIcon = toggleCamBtn.querySelector('svg');
+          
+          if (micIcon) {
+            micIcon.innerHTML = `<path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
+             <line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2"/>`;
+          }
+          
+          if (camIcon) {
+            camIcon.innerHTML = `<path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
+             <line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2"/>`;
+          }
+          return;
+        }
+        
+        // Есть стрим - проверяем состояние треков
+        const audioTracks = localStream.getAudioTracks();
+        const videoTracks = localStream.getVideoTracks();
+        
+        const isAudioEnabled = audioTracks.length > 0 && audioTracks.every(t => t.enabled);
+        const isVideoEnabled = videoTracks.length > 0 && videoTracks.every(t => t.enabled);
+        
+        // Обновляем классы кнопок
+        toggleMicBtn.className = `control-btn mic ${isAudioEnabled ? 'enabled' : ''}`;
+        toggleCamBtn.className = `control-btn video ${isVideoEnabled ? 'enabled' : ''}`;
+        
+        // Обновляем иконки
+        const micIcon = toggleMicBtn.querySelector('svg');
+        const camIcon = toggleCamBtn.querySelector('svg');
+        
+        if (micIcon) {
+          micIcon.innerHTML = isAudioEnabled ?
+            `<path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>` :
+            `<path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
+             <line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2"/>`;
+        }
+        
+        if (camIcon) {
+          camIcon.innerHTML = isVideoEnabled ?
+            `<path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>` :
+            `<path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
+             <line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2"/>`;
         }
       }
 
@@ -967,20 +1025,11 @@
         const audioTracks = localStream.getAudioTracks();
         const isMuted = audioTracks.every(t => !t.enabled);
         
+        // Переключаем состояние треков
         for (const t of audioTracks) t.enabled = !isMuted;
         
-        // Обновляем внешний вид кнопки
-        toggleMicBtn.className = `control-btn mic ${!isMuted ? 'enabled' : ''}`;
-        
-        // Обновляем иконку микрофона
-        const micIcon = toggleMicBtn.querySelector('svg');
-        if (micIcon) {
-          micIcon.innerHTML = isMuted ? 
-            `<path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
-             <line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2"/>` :
-            `<path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>`;
-        }
-        
+        // Обновляем визуальное состояние кнопок
+        updateButtonStates();
         updateParticipantsList();
       };
       
@@ -994,20 +1043,11 @@
         const videoTracks = localStream.getVideoTracks();
         const isVideoOff = videoTracks.every(t => !t.enabled);
         
+        // Переключаем состояние треков
         for (const t of videoTracks) t.enabled = !isVideoOff;
         
-        // Обновляем внешний вид кнопки
-        toggleCamBtn.className = `control-btn video ${!isVideoOff ? 'enabled' : ''}`;
-        
-        // Обновляем иконку камеры
-        const camIcon = toggleCamBtn.querySelector('svg');
-        if (camIcon) {
-          camIcon.innerHTML = isVideoOff ?
-            `<path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
-             <line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2"/>` :
-            `<path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>`;
-        }
-        
+        // Обновляем визуальное состояние кнопок
+        updateButtonStates();
         updateParticipantsList();
       };
 
