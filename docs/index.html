@@ -318,8 +318,9 @@
         .controls { padding: 8px; margin: 8px 0; }
         header { padding: 8px 12px; }
         .logo { font-size: 16px; }
-        .call-controls { bottom: 12px; gap: 8px; padding: 8px 16px; }
-        .control-btn { width: 40px; height: 40px; font-size: 16px; }
+        .call-controls { bottom: 12px; gap: 12px; padding: 12px 18px; }
+        .control-btn { width: 52px; height: 52px; font-size: 20px; }
+        .control-btn svg { width: 24px; height: 24px; }
         .participants-header { padding: 12px; }
         .participants-title { font-size: 16px; }
         .participants-count { font-size: 12px; }
@@ -604,19 +605,19 @@
       
       <div class="call-controls" id="callControls">
         <button class="control-btn video enabled" id="toggleCam" title="Toggle Camera">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
+          <svg width="20" height="20" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
           </svg>
         </button>
         <button class="control-btn mic" id="toggleMic" title="Toggle Microphone">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
+          <svg width="20" height="20" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
             <line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2" opacity="0.5"/>
           </svg>
         </button>
         <button class="control-btn leave" id="hangupBtn" title="Leave Call">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.7l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.1-.7-.28-.79-.73-1.68-1.36-2.66-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/>
+          <svg width="20" height="20" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.7l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.1-.7-.28-.79-.73-1.68-1.36-2.66-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/>
           </svg>
         </button>
       </div>
