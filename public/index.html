@@ -142,6 +142,9 @@
         text-transform: none;
         letter-spacing: 0;
       }
+      /* Ensure SVG icons inherit and render with the button color */
+      .control-btn svg { display: block; width: 20px; height: 20px; color: inherit; }
+      .control-btn svg path, .control-btn svg line, .control-btn svg circle, .control-btn svg rect { fill: currentColor; stroke: currentColor; }
       
       .btn-primary {
         background: #5865f2;
