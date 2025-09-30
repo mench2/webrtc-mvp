@@ -308,8 +308,9 @@
         video { min-height: 200px; max-height: 300px; }
         .logo { font-size: 18px; }
         .status-indicator { font-size: 12px; }
-        .call-controls { bottom: 16px; gap: 12px; padding: 12px 20px; }
-        .control-btn { width: 44px; height: 44px; font-size: 18px; }
+        .call-controls { bottom: 16px; gap: 16px; padding: 14px 20px; }
+        .control-btn { width: 52px; height: 52px; font-size: 20px; }
+        .control-btn.primary { width: 76px; height: 76px; }
       }
       
       @media (max-width: 480px) {
@@ -319,9 +320,10 @@
         .controls { padding: 8px; margin: 8px 0; }
         header { padding: 8px 12px; }
         .logo { font-size: 16px; }
-        .call-controls { bottom: 12px; gap: 12px; padding: 12px 18px; }
-        .control-btn { width: 52px; height: 52px; font-size: 20px; }
-        .control-btn svg { width: 24px; height: 24px; }
+        .call-controls { bottom: 12px; gap: 16px; padding: 14px 18px; }
+        .control-btn { width: 56px; height: 56px; font-size: 22px; }
+        .control-btn.primary { width: 80px; height: 80px; }
+        .control-btn svg { width: 26px; height: 26px; }
         .participants-header { padding: 12px; }
         .participants-title { font-size: 16px; }
         .participants-count { font-size: 12px; }
@@ -426,10 +428,10 @@
         left: 50%;
         transform: translateX(-50%);
         display: flex;
-        align-items: center;
-        gap: 12px;
+        align-items: flex-end;
+        gap: 16px;
         background: #2a2a2a;
-        padding: 12px 20px;
+        padding: 14px 22px;
         border-radius: 40px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         min-width: 300px;
@@ -502,8 +504,8 @@
       }
       
       .control-btn {
-        width: 44px;
-        height: 44px;
+        width: 52px;
+        height: 52px;
         border-radius: 50%;
         border: none;
         cursor: pointer;
@@ -514,6 +516,11 @@
         transition: all 0.2s ease;
         position: relative;
       }
+      .control-btn.primary { width: 72px; height: 72px; }
+      .control-label { text-align: center; font-size: 12px; color: #8a8a8a; margin-top: 6px; }
+      .primary-wrap { display: flex; flex-direction: column; align-items: center; }
+      .mic-pulse { box-shadow: 0 0 0 0 rgba(88,101,242,0.6); animation: pulseRing 2s infinite; }
+      @keyframes pulseRing { 0% { box-shadow: 0 0 0 0 rgba(88,101,242,0.6);} 70% { box-shadow: 0 0 0 16px rgba(88,101,242,0);} 100% { box-shadow: 0 0 0 0 rgba(88,101,242,0);} }
       
       .control-btn.video {
         background: #4f545c;
@@ -624,8 +631,11 @@
         </div>
         
         <button class="control-btn video enabled" id="toggleCam" title="Toggle Camera"><span class="icon">📷</span></button>
-        
-        <button class="control-btn mic" id="toggleMic" title="Toggle Microphone"><span class="icon">🎤</span></button>
+
+        <div class="primary-wrap">
+          <button class="control-btn mic primary mic-pulse" id="toggleMic" title="Toggle Microphone"><span class="icon">🎤</span></button>
+          <div class="control-label" id="micLabel">Unmute</div>
+        </div>
         
         <div class="settings-dropdown" id="settingsDropdown">
           <button class="control-btn settings" id="settingsBtn" title="Settings">
@@ -639,7 +649,7 @@
           </div>
         </div>
         
-        <button class="control-btn leave" id="hangupBtn" title="Leave Call"><span class="icon">📞</span></button>
+        <button class="control-btn leave" id="hangupBtn" title="Leave Call"><span class="icon">❌</span></button>
       </div>
     </div>
 
@@ -1127,6 +1137,10 @@
         
         // Обновляем визуальное состояние кнопок
         updateButtonStates();
+        const micLabel = document.getElementById('micLabel');
+        if (micLabel) {
+          micLabel.textContent = isMuted ? 'Unmute' : 'Mute';
+        }
         updateParticipantsList();
       };
       
