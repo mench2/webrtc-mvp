@@ -421,11 +421,79 @@
         left: 50%;
         transform: translateX(-50%);
         display: flex;
+        align-items: center;
         gap: 12px;
         background: #2a2a2a;
         padding: 12px 20px;
         border-radius: 40px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        min-width: 300px;
+      }
+      
+      .room-input {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+      }
+      
+      .room-input input {
+        background: #1a1a1a;
+        border: 1px solid #3a3a3a;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 20px;
+        font-size: 14px;
+        min-width: 120px;
+        transition: all 0.2s ease;
+      }
+      
+      .room-input input:focus {
+        outline: none;
+        border-color: #5865f2;
+        box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.3);
+      }
+      
+      .room-input input::placeholder {
+        color: #8a8a8a;
+      }
+      
+      .settings-dropdown {
+        position: relative;
+        display: none;
+      }
+      
+      .settings-dropdown.show {
+        display: block;
+      }
+      
+      .settings-content {
+        position: absolute;
+        bottom: 60px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 12px;
+        padding: 16px;
+        min-width: 200px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        z-index: 1000;
+      }
+      
+      .settings-content select {
+        width: 100%;
+        margin-bottom: 8px;
+        background: #2a2a2a;
+        border: 1px solid #3a3a3a;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+      }
+      
+      .settings-content select:last-child {
+        margin-bottom: 0;
       }
       
       .control-btn {
@@ -462,6 +530,22 @@
         color: white;
       }
       
+      .control-btn.join {
+        background: #5865f2;
+        color: white;
+        width: 36px;
+        height: 36px;
+      }
+      
+      .control-btn.join:hover {
+        background: #4752c4;
+      }
+      
+      .control-btn.settings {
+        background: #4f545c;
+        color: white;
+      }
+      
       .control-btn.leave {
         background: #ed4245;
         color: white;
@@ -492,11 +576,8 @@
 
       <div class="main-content">
         <div class="video-section">
-          <div class="controls">
-            <input id="roomId" placeholder="Enter room ID..." style="flex: 1;" />
-            <button id="joinBtn" class="btn-primary">Join Room</button>
-            <select id="cameraSelect" style="display: none;"></select>
-            <select id="micSelect" style="display: none;"></select>
+          <div class="controls" style="display: none;">
+            <!-- Старые контролы скрыты -->
           </div>
           
           <div id="connectionProgress" style="display: none; margin: 16px 0;">
@@ -532,17 +613,40 @@
       <div id="errors"></div>
       
       <div class="call-controls" id="callControls">
+        <div class="room-input" id="roomInput">
+          <input id="roomId" placeholder="Enter room ID..." />
+          <button id="joinBtn" class="control-btn join" title="Join Room">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+          </button>
+        </div>
+        
         <button class="control-btn video enabled" id="toggleCam" title="Toggle Camera">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
           </svg>
         </button>
+        
         <button class="control-btn mic" id="toggleMic" title="Toggle Microphone">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
             <line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2" opacity="0.5"/>
           </svg>
         </button>
+        
+        <div class="settings-dropdown" id="settingsDropdown">
+          <button class="control-btn settings" id="settingsBtn" title="Settings">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
+            </svg>
+          </button>
+          <div class="settings-content" id="settingsContent">
+            <select id="cameraSelect"></select>
+            <select id="micSelect"></select>
+          </div>
+        </div>
+        
         <button class="control-btn leave" id="hangupBtn" title="Leave Call">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.7l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.1-.7-.28-.79-.73-1.68-1.36-2.66-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/>
@@ -573,6 +677,10 @@
       const participantsCount = document.getElementById('participantsCount');
       const participantsList = document.getElementById('participantsList');
       const callControls = document.getElementById('callControls');
+      const settingsDropdown = document.getElementById('settingsDropdown');
+      const settingsBtn = document.getElementById('settingsBtn');
+      const settingsContent = document.getElementById('settingsContent');
+      const roomInput = document.getElementById('roomInput');
 
       const params = new URLSearchParams(window.location.search);
       const SIGNAL_URL = params.get('signal') || window.location.origin;
@@ -598,9 +706,10 @@
 
       function showControls(show) {
         participantsSection.style.display = show ? 'flex' : 'none';
-        cameraSelect.style.display = show ? 'block' : 'none';
-        micSelect.style.display = show ? 'block' : 'none';
-        // callControls всегда видимы
+        settingsDropdown.style.display = show ? 'block' : 'none';
+        
+        // Скрываем поле ввода комнаты при подключении
+        roomInput.style.display = show ? 'none' : 'flex';
       }
 
       function updateRoomInfo(room) {
@@ -1106,8 +1215,15 @@
         socket.emit('leave', roomId);
         hangup();
         updateRoomInfo('');
-        joinBtn.textContent = 'Join Room';
-        joinBtn.className = 'btn-primary';
+        
+        // Восстанавливаем кнопку Join
+        joinBtn.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+          </svg>
+        `;
+        joinBtn.className = 'control-btn join';
+        joinBtn.title = 'Join Room';
         roomIdInput.disabled = false;
         updateStatus('Disconnected', '');
         clearError();
@@ -1115,7 +1231,7 @@
       }
 
       joinBtn.onclick = async () => {
-        if (joinBtn.textContent === 'Leave Room') {
+        if (joinBtn.classList.contains('leave')) {
           leaveRoom();
           return;
         }
@@ -1127,8 +1243,15 @@
           await getLocalStream(); // запросим доступ при клике (жест пользователя)
           socket.emit('join', roomId);
           updateRoomInfo(roomId);
-          joinBtn.textContent = 'Leave Room';
-          joinBtn.className = 'btn-danger';
+          
+          // Обновляем кнопку на "Leave"
+          joinBtn.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.7l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.1-.7-.28-.79-.73-1.68-1.36-2.66-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/>
+            </svg>
+          `;
+          joinBtn.className = 'control-btn join leave';
+          joinBtn.title = 'Leave Room';
           roomIdInput.disabled = true;
           updateStatus('Connected to room', 'connected');
         } catch (e) {
@@ -1136,9 +1259,21 @@
           showError(`Failed to join room: ${e.message}`);
         }
       };
-      callBtn.onclick = call;
+      
       hangupBtn.onclick = hangup;
-      retryConnectionBtn.onclick = retryConnections;
+      
+      // Обработчик для шестеренки настроек
+      settingsBtn.onclick = (e) => {
+        e.stopPropagation();
+        settingsContent.style.display = settingsContent.style.display === 'block' ? 'none' : 'block';
+      };
+      
+      // Закрываем дропдаун при клике вне его
+      document.addEventListener('click', (e) => {
+        if (!settingsDropdown.contains(e.target)) {
+          settingsContent.style.display = 'none';
+        }
+      });
 
       // ask for perms early
       // На некоторых браузерах (iOS/Safari) запрашивать доступ вне жеста пользователя нельзя —
