@@ -18,23 +18,23 @@
       }
       
       .wrap { 
-        max-width: 1200px; 
-        margin: 0 auto; 
-        background: #1a1a1a;
-        border-radius: 16px;
-        padding: 24px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        border: 1px solid #2a2a2a;
+        max-width: 100vw; 
+        height: 100vh;
+        margin: 0; 
+        background: #0f0f0f;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
       }
       
       header { 
         display: flex; 
         align-items: center; 
         justify-content: space-between;
-        gap: 16px; 
-        margin-bottom: 24px;
-        padding-bottom: 16px;
+        padding: 16px 24px;
+        background: #1a1a1a;
         border-bottom: 1px solid #2a2a2a;
+        flex-shrink: 0;
       }
       
       .logo {
@@ -72,6 +72,29 @@
       @keyframes pulse {
         0%, 100% { opacity: 1; }
         50% { opacity: 0.5; }
+      }
+      
+      .main-content {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+      }
+      
+      .video-section {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 20px;
+        overflow: hidden;
+      }
+      
+      .participants-section {
+        width: 300px;
+        background: #1a1a1a;
+        border-left: 1px solid #2a2a2a;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
       }
       
       .controls { 
@@ -178,14 +201,15 @@
       .videos-grid { 
         display: grid; 
         gap: 16px;
-        margin-top: 24px;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        flex: 1;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        align-content: start;
       }
       
       .videos-grid.two-videos { grid-template-columns: 1fr 1fr; }
       .videos-grid.three-videos { grid-template-columns: 1fr 1fr 1fr; }
       .videos-grid.four-videos { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
-      .videos-grid.five-plus-videos { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+      .videos-grid.five-plus-videos { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
       
       .video-container {
         position: relative;
@@ -262,23 +286,40 @@
       }
       
       @media (max-width: 768px) {
-        body { padding: 8px; }
-        .wrap { padding: 16px; margin: 0; border-radius: 12px; }
-        .videos-grid { grid-template-columns: 1fr !important; gap: 12px; }
-        .controls { flex-direction: column; padding: 16px; }
+        body { padding: 0; }
+        .wrap { height: 100vh; }
+        .main-content { flex-direction: column; }
+        .participants-section { 
+          width: 100%; 
+          height: 200px; 
+          border-left: none; 
+          border-top: 1px solid #2a2a2a; 
+          order: -1;
+        }
+        .video-section { padding: 12px; }
+        .videos-grid { grid-template-columns: 1fr !important; gap: 8px; }
+        .controls { flex-direction: column; padding: 12px; margin: 12px 0; }
         .controls button, .controls input, .controls select { width: 100%; margin-bottom: 8px; }
-        header { flex-direction: column; text-align: center; gap: 12px; }
-        video { min-height: 180px; max-height: 250px; }
-        .logo { font-size: 20px; }
-        .status-indicator { font-size: 13px; }
+        header { padding: 12px 16px; }
+        video { min-height: 200px; max-height: 300px; }
+        .logo { font-size: 18px; }
+        .status-indicator { font-size: 12px; }
+        .call-controls { bottom: 16px; gap: 12px; padding: 12px 20px; }
+        .control-btn { width: 44px; height: 44px; font-size: 18px; }
       }
       
       @media (max-width: 480px) {
-        body { padding: 4px; }
-        .wrap { padding: 12px; border-radius: 8px; }
-        video { min-height: 160px; max-height: 200px; }
-        .controls { padding: 12px; }
-        .controls button, .controls input, .controls select { padding: 10px 12px; }
+        .participants-section { height: 150px; }
+        .video-section { padding: 8px; }
+        video { min-height: 180px; max-height: 250px; }
+        .controls { padding: 8px; margin: 8px 0; }
+        header { padding: 8px 12px; }
+        .logo { font-size: 16px; }
+        .call-controls { bottom: 12px; gap: 8px; padding: 8px 16px; }
+        .control-btn { width: 40px; height: 40px; font-size: 16px; }
+        .participants-header { padding: 12px; }
+        .participants-title { font-size: 16px; }
+        .participants-count { font-size: 12px; }
       }
       
       .loading {
@@ -293,6 +334,136 @@
       
       @keyframes spin {
         to { transform: rotate(360deg); }
+      }
+      
+      .participants-header {
+        padding: 20px;
+        border-bottom: 1px solid #2a2a2a;
+        flex-shrink: 0;
+      }
+      
+      .participants-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+      
+      .participants-count {
+        font-size: 14px;
+        color: #8a8a8a;
+      }
+      
+      .participants-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 12px;
+      }
+      
+      .participant-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        margin-bottom: 4px;
+        transition: background-color 0.2s ease;
+      }
+      
+      .participant-item:hover {
+        background: #2a2a2a;
+      }
+      
+      .participant-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #5865f2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 14px;
+        color: white;
+      }
+      
+      .participant-info {
+        flex: 1;
+        min-width: 0;
+      }
+      
+      .participant-name {
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      
+      .participant-status {
+        font-size: 12px;
+        color: #8a8a8a;
+      }
+      
+      .participant-mic {
+        width: 16px;
+        height: 16px;
+        color: #16a34a;
+      }
+      
+      .participant-mic.muted {
+        color: #dc2626;
+      }
+      
+      .call-controls {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 16px;
+        background: #1a1a1a;
+        padding: 16px 24px;
+        border-radius: 50px;
+        border: 1px solid #2a2a2a;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      }
+      
+      .control-btn {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        transition: all 0.2s ease;
+      }
+      
+      .control-btn.video {
+        background: #4f545c;
+        color: white;
+      }
+      
+      .control-btn.mic {
+        background: #5865f2;
+        color: white;
+      }
+      
+      .control-btn.mic.muted {
+        background: #ed4245;
+        color: white;
+      }
+      
+      .control-btn.leave {
+        background: #ed4245;
+        color: white;
+      }
+      
+      .control-btn:hover {
+        transform: scale(1.05);
       }
     </style>
   </head>
@@ -313,37 +484,51 @@
         <div class="room-id" id="currentRoom"></div>
       </div>
 
-      <div class="controls">
-        <input id="roomId" placeholder="Enter room ID..." style="flex: 1;" />
-        <button id="joinBtn" class="btn-primary">Join Room</button>
-        <button id="callBtn" class="btn-success" style="display: none;">Start Call</button>
-        <button id="hangupBtn" class="btn-danger" style="display: none;">End Call</button>
-        <button id="toggleMic" class="btn-secondary" style="display: none;">🎤 Mic</button>
-        <button id="toggleCam" class="btn-secondary" style="display: none;">📹 Camera</button>
-        <button id="shareScreen" class="btn-warning" style="display: none;">🖥️ Share Screen</button>
-        <button id="retryConnection" class="btn-secondary" style="display: none;">🔄 Retry</button>
-        <select id="cameraSelect" style="display: none;"></select>
-        <select id="micSelect" style="display: none;"></select>
+      <div class="main-content">
+        <div class="video-section">
+          <div class="controls">
+            <input id="roomId" placeholder="Enter room ID..." style="flex: 1;" />
+            <button id="joinBtn" class="btn-primary">Join Room</button>
+            <select id="cameraSelect" style="display: none;"></select>
+            <select id="micSelect" style="display: none;"></select>
+          </div>
+          
+          <div id="connectionProgress" style="display: none; margin: 16px 0;">
+            <div style="background: #1e1e1e; border-radius: 8px; padding: 12px; border: 1px solid #2a2a2a;">
+              <div style="font-size: 14px; margin-bottom: 8px; color: #ffffff;">Establishing connection...</div>
+              <div style="background: #2a2a2a; border-radius: 4px; height: 6px; overflow: hidden;">
+                <div id="progressBar" style="background: #5865f2; height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+              </div>
+              <div id="progressText" style="font-size: 12px; margin-top: 8px; color: #8a8a8a;">Gathering ICE candidates...</div>
+            </div>
+          </div>
+
+          <div class="videos-grid" id="videosGrid">
+            <div class="video-container local-video">
+              <div class="video-label">Your Camera</div>
+              <video id="localVideo" autoplay playsinline muted></video>
+            </div>
+            <!-- Remote videos will be added dynamically -->
+          </div>
+        </div>
+
+        <div class="participants-section" id="participantsSection" style="display: none;">
+          <div class="participants-header">
+            <div class="participants-title" id="roomTitle">Room</div>
+            <div class="participants-count" id="participantsCount">0 participants</div>
+          </div>
+          <div class="participants-list" id="participantsList">
+            <!-- Participants will be added dynamically -->
+          </div>
+        </div>
       </div>
       
       <div id="errors"></div>
       
-      <div id="connectionProgress" style="display: none; margin: 16px 0;">
-        <div style="background: #1e1e1e; border-radius: 8px; padding: 12px; border: 1px solid #2a2a2a;">
-          <div style="font-size: 14px; margin-bottom: 8px; color: #ffffff;">Establishing connection...</div>
-          <div style="background: #2a2a2a; border-radius: 4px; height: 6px; overflow: hidden;">
-            <div id="progressBar" style="background: #5865f2; height: 100%; width: 0%; transition: width 0.3s ease;"></div>
-          </div>
-          <div id="progressText" style="font-size: 12px; margin-top: 8px; color: #8a8a8a;">Gathering ICE candidates...</div>
-        </div>
-      </div>
-
-      <div class="videos-grid" id="videosGrid">
-        <div class="video-container local-video">
-          <div class="video-label">Your Camera</div>
-          <video id="localVideo" autoplay playsinline muted></video>
-        </div>
-        <!-- Remote videos will be added dynamically -->
+      <div class="call-controls" id="callControls" style="display: none;">
+        <button class="control-btn video" id="toggleCam" title="Toggle Camera">📹</button>
+        <button class="control-btn mic" id="toggleMic" title="Toggle Microphone">🎤</button>
+        <button class="control-btn leave" id="hangupBtn" title="Leave Call">✕</button>
       </div>
     </div>
 
@@ -352,23 +537,23 @@
       const statusEl = document.getElementById('status');
       const statusDot = document.getElementById('statusDot');
       const joinBtn = document.getElementById('joinBtn');
-      const callBtn = document.getElementById('callBtn');
       const hangupBtn = document.getElementById('hangupBtn');
       const toggleMicBtn = document.getElementById('toggleMic');
       const toggleCamBtn = document.getElementById('toggleCam');
-      const shareScreenBtn = document.getElementById('shareScreen');
-      const retryConnectionBtn = document.getElementById('retryConnection');
       const roomIdInput = document.getElementById('roomId');
       const localVideo = document.getElementById('localVideo');
       const cameraSelect = document.getElementById('cameraSelect');
       const micSelect = document.getElementById('micSelect');
       const errorsEl = document.getElementById('errors');
-      const roomInfo = document.getElementById('roomInfo');
-      const currentRoom = document.getElementById('currentRoom');
       const videosGrid = document.getElementById('videosGrid');
       const connectionProgress = document.getElementById('connectionProgress');
       const progressBar = document.getElementById('progressBar');
       const progressText = document.getElementById('progressText');
+      const participantsSection = document.getElementById('participantsSection');
+      const roomTitle = document.getElementById('roomTitle');
+      const participantsCount = document.getElementById('participantsCount');
+      const participantsList = document.getElementById('participantsList');
+      const callControls = document.getElementById('callControls');
 
       const params = new URLSearchParams(window.location.search);
       const SIGNAL_URL = params.get('signal') || window.location.origin;
@@ -393,17 +578,67 @@
       }
 
       function showControls(show) {
-        const controls = [callBtn, hangupBtn, toggleMicBtn, toggleCamBtn, shareScreenBtn, retryConnectionBtn, cameraSelect, micSelect];
-        controls.forEach(el => el.style.display = show ? 'block' : 'none');
+        participantsSection.style.display = show ? 'flex' : 'none';
+        callControls.style.display = show ? 'flex' : 'none';
+        cameraSelect.style.display = show ? 'block' : 'none';
+        micSelect.style.display = show ? 'block' : 'none';
       }
 
       function updateRoomInfo(room) {
         if (room) {
-          roomInfo.style.display = 'block';
-          currentRoom.textContent = room;
-        } else {
-          roomInfo.style.display = 'none';
+          roomTitle.textContent = room;
+          updateParticipantsList();
         }
+      }
+      
+      function updateParticipantsList() {
+        const totalParticipants = 1 + peers.size; // local + remote
+        participantsCount.textContent = `${totalParticipants} participant${totalParticipants !== 1 ? 's' : ''}`;
+        
+        participantsList.innerHTML = '';
+        
+        // Add local participant
+        const localParticipant = createParticipantItem('You', true, !localStream || localStream.getAudioTracks().every(t => t.enabled));
+        participantsList.appendChild(localParticipant);
+        
+        // Add remote participants
+        for (const [peerId, peer] of peers.entries()) {
+          const participant = createParticipantItem(`Peer ${peerId.substring(0, 8)}`, false, true);
+          participantsList.appendChild(participant);
+        }
+      }
+      
+      function createParticipantItem(name, isLocal, isUnmuted) {
+        const item = document.createElement('div');
+        item.className = 'participant-item';
+        
+        const avatar = document.createElement('div');
+        avatar.className = 'participant-avatar';
+        avatar.textContent = name.charAt(0).toUpperCase();
+        
+        const info = document.createElement('div');
+        info.className = 'participant-info';
+        
+        const nameEl = document.createElement('div');
+        nameEl.className = 'participant-name';
+        nameEl.textContent = name;
+        
+        const status = document.createElement('div');
+        status.className = 'participant-status';
+        status.textContent = isLocal ? 'You' : 'Connected';
+        
+        info.appendChild(nameEl);
+        info.appendChild(status);
+        
+        const mic = document.createElement('div');
+        mic.className = `participant-mic ${isUnmuted ? '' : 'muted'}`;
+        mic.innerHTML = isUnmuted ? '🎤' : '🔇';
+        
+        item.appendChild(avatar);
+        item.appendChild(info);
+        item.appendChild(mic);
+        
+        return item;
       }
 
       function showError(message) {
@@ -605,6 +840,7 @@
         peers.set(peerId, { pc, remoteStream });
         
         updateVideoGridLayout();
+        updateParticipantsList();
         console.log(`Peer ${peerId} added successfully`);
       }
 
@@ -615,6 +851,7 @@
           peers.delete(peerId);
           removeRemoteVideoElement(peerId);
           updateVideoGridLayout();
+          updateParticipantsList();
         }
       }
 
@@ -703,22 +940,25 @@
 
       toggleMicBtn.onclick = () => {
         if (!localStream) return;
-        for (const t of localStream.getAudioTracks()) t.enabled = !t.enabled;
+        const audioTracks = localStream.getAudioTracks();
+        const isMuted = audioTracks.every(t => !t.enabled);
+        
+        for (const t of audioTracks) t.enabled = !isMuted;
+        
+        toggleMicBtn.className = `control-btn mic ${isMuted ? '' : 'muted'}`;
+        toggleMicBtn.innerHTML = isMuted ? '🎤' : '🔇';
+        updateParticipantsList();
       };
+      
       toggleCamBtn.onclick = () => {
         if (!localStream) return;
-        for (const t of localStream.getVideoTracks()) t.enabled = !t.enabled;
-      };
-      shareScreenBtn.onclick = async () => {
-        if (!pc) return;
-        const screen = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
-        const videoTrack = screen.getVideoTracks()[0];
-        const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
-        if (sender) sender.replaceTrack(videoTrack);
-        videoTrack.onended = async () => {
-          const camTrack = localStream.getVideoTracks()[0];
-          if (sender && camTrack) sender.replaceTrack(camTrack);
-        };
+        const videoTracks = localStream.getVideoTracks();
+        const isVideoOff = videoTracks.every(t => !t.enabled);
+        
+        for (const t of videoTracks) t.enabled = !isVideoOff;
+        
+        toggleCamBtn.innerHTML = isVideoOff ? '📹' : '📷';
+        updateParticipantsList();
       };
 
       socket.on('connect', () => {
@@ -781,6 +1021,7 @@
         roomIdInput.disabled = false;
         updateStatus('Disconnected', '');
         clearError();
+        showControls(false);
       }
 
       joinBtn.onclick = async () => {
@@ -805,9 +1046,7 @@
           showError(`Failed to join room: ${e.message}`);
         }
       };
-      callBtn.onclick = call;
       hangupBtn.onclick = hangup;
-      retryConnectionBtn.onclick = retryConnections;
 
       // ask for perms early
       // На некоторых браузерах (iOS/Safari) запрашивать доступ вне жеста пользователя нельзя —
@@ -816,5 +1055,3 @@
     </script>
   </body>
   </html>
-
-
