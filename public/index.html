@@ -1245,6 +1245,9 @@
           await getLocalStream(); // запросим доступ при клике (жест пользователя)
           socket.emit('join', roomId);
           updateRoomInfo(roomId);
+          // Показываем панель управления и участников сразу после входа в комнату
+          showControls(true);
+          updateParticipantsList();
           
           // Обновляем кнопку на "Leave"
           joinBtn.innerHTML = `
