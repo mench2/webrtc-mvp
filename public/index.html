@@ -1150,7 +1150,7 @@
         
         updateVideoGridLayout();
         updateParticipantsList();
-        console.log(`Peer ${peerId} added successfully`);
+        console.log(`Peer ${peerId} added successfully, total peers: ${peers.size}`);
       }
 
       function removePeer(peerId) {
@@ -1311,15 +1311,23 @@
       });
       socket.on('peers-list', ({ peers: peerList }) => {
         console.log('Received peers list:', peerList);
+        console.log('Our socket ID:', socket.id);
+        
         // Добавляем всех существующих пиров
-        peerList.forEach(peerId => addPeer(peerId));
+        peerList.forEach(peerId => {
+          console.log(`Adding peer: ${peerId}`);
+          addPeer(peerId);
+        });
         
         // Инициируем звонок только если наш socket.id лексикографически меньше
         // Это гарантирует, что только один клиент инициирует звонок
         if (peerList.length > 0) {
           setTimeout(async () => {
+            console.log('Starting peer calls...');
             for (const peerId of peerList) {
+              console.log(`Checking peer ${peerId}: has=${peers.has(peerId)}, socket.id=${socket.id} < peerId=${peerId} = ${socket.id < peerId}`);
               if (peers.has(peerId) && socket.id < peerId) {
+                console.log(`Calling peer ${peerId}`);
                 await callPeer(peerId);
               }
             }
@@ -1329,11 +1337,14 @@
       
       socket.on('peer-joined', ({ socketId }) => {
         console.log('Peer joined:', socketId);
+        console.log('Our socket ID:', socket.id);
         addPeer(socketId);
         
         // Новый пир инициирует звонок только если его ID меньше
         setTimeout(async () => {
+          console.log(`Checking new peer ${socketId}: has=${peers.has(socketId)}, socket.id=${socket.id} < socketId=${socketId} = ${socket.id < socketId}`);
           if (peers.has(socketId) && socket.id < socketId) {
+            console.log(`Calling new peer ${socketId}`);
             await callPeer(socketId);
           }
         }, 1000);
@@ -1383,6 +1394,7 @@
       // Присоединение к существующей комнате
       async function joinExistingRoom() {
         try {
+          console.log(`Joining existing room: ${roomId}`);
           await getLocalStream();
           socket.emit('join', roomId);
           updateRoomInfo(roomId);
@@ -1390,6 +1402,7 @@
           updateParticipantsList();
           updateStatus('Connected to room', 'connected');
         } catch (e) {
+          console.error('Failed to join existing room:', e);
           updateStatus('Error', '');
           showError(`Failed to join room: ${e.message}`);
         }
@@ -1401,6 +1414,7 @@
         isRoomCreator = true;
         
         try {
+          console.log(`Creating new room: ${roomId}`);
           await getLocalStream();
           socket.emit('join', roomId);
           updateRoomInfo(roomId);
@@ -1411,6 +1425,7 @@
           // Показываем уведомление о создании комнаты
           showNotification(`Комната ${roomId} создана!`);
         } catch (e) {
+          console.error('Failed to create room:', e);
           updateStatus('Error', '');
           showError(`Failed to create room: ${e.message}`);
         }
