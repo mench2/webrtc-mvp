@@ -936,15 +936,13 @@
       }
 
       function showProgress(show) {
-        connectionProgress.style.display = show ? 'block' : 'none';
-        if (!show) {
-          progressBar.style.width = '0%';
-        }
+        // Прогресс бар удален, просто логируем
+        console.log('Progress:', show ? 'started' : 'finished');
       }
 
       function updateProgress(percent, text) {
-        progressBar.style.width = percent + '%';
-        progressText.textContent = text;
+        // Прогресс бар удален, просто логируем
+        console.log(`Progress: ${percent}% - ${text}`);
       }
 
       function updateVideoGridLayout() {
@@ -1166,13 +1164,20 @@
 
       async function callPeer(peerId) {
         const peer = peers.get(peerId);
-        if (!peer) return;
+        if (!peer) {
+          console.log(`Cannot call peer ${peerId}: peer not found in peers map`);
+          return;
+        }
         
         console.log(`Calling peer ${peerId}...`);
-        const offer = await peer.pc.createOffer();
-        await peer.pc.setLocalDescription(offer);
-        socket.emit('signal', { to: peerId, data: { sdp: peer.pc.localDescription } });
-        console.log(`Offer sent to ${peerId}`);
+        try {
+          const offer = await peer.pc.createOffer();
+          await peer.pc.setLocalDescription(offer);
+          socket.emit('signal', { to: peerId, data: { sdp: peer.pc.localDescription } });
+          console.log(`Offer sent to ${peerId}`);
+        } catch (error) {
+          console.error(`Error calling peer ${peerId}:`, error);
+        }
       }
 
       async function call() {
@@ -1195,18 +1200,21 @@
         console.log(`Received signal from ${from}:`, data);
         
         if (!peers.has(from)) {
-          console.log(`Adding new peer ${from}`);
+          console.log(`Adding new peer ${from} from signal`);
           addPeer(from);
         }
         
         const peer = peers.get(from);
-        if (!peer) return;
+        if (!peer) {
+          console.error(`Peer ${from} not found after adding`);
+          return;
+        }
         
         if (data.sdp) {
           console.log(`Processing SDP from ${from}:`, data.sdp.type);
           try {
             await peer.pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-          if (data.sdp.type === 'offer') {
+            if (data.sdp.type === 'offer') {
               console.log(`Creating answer for ${from}`);
               const answer = await peer.pc.createAnswer();
               await peer.pc.setLocalDescription(answer);
