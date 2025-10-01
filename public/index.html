@@ -11,17 +11,18 @@
       body { 
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; 
         margin: 0; 
-        padding: 16px; 
-        background: #0f0f0f;
+        padding: 0; 
+        background: #1a1a1a;
         min-height: 100vh;
         color: #ffffff;
+        overflow: hidden;
       }
       
       .wrap { 
-        max-width: 100vw; 
+        width: 100vw; 
         height: 100vh;
         margin: 0; 
-        background: #0f0f0f;
+        background: #1a1a1a;
         display: flex;
         flex-direction: column;
         overflow: hidden;
@@ -30,20 +31,28 @@
       header { 
         display: flex; 
         align-items: center; 
-        justify-content: space-between;
-        padding: 16px 24px;
-        background: #1a1a1a;
-        border-bottom: 1px solid #2a2a2a;
+        justify-content: center;
+        padding: 20px 24px;
+        background: #2a2a2a;
         flex-shrink: 0;
+        position: relative;
       }
       
       .logo {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        font-size: 24px;
-        font-weight: 700;
+        text-align: center;
         color: #ffffff;
+      }
+      
+      .room-title {
+        font-size: 20px;
+        font-weight: 600;
+        margin: 0;
+      }
+      
+      .participants-count {
+        font-size: 14px;
+        color: #b0b0b0;
+        margin: 4px 0 0 0;
       }
       
       .status-indicator {
@@ -78,20 +87,22 @@
         display: flex;
         flex: 1;
         overflow: hidden;
+        gap: 0;
       }
       
       .video-section {
         flex: 1;
         display: flex;
         flex-direction: column;
-        padding: 20px;
+        padding: 0;
         overflow: hidden;
+        background: #1a1a1a;
       }
       
       .participants-section {
-        width: 300px;
-        background: #1a1a1a;
-        border-left: 1px solid #2a2a2a;
+        width: 320px;
+        background: #1e1e1e;
+        border-left: 1px solid #333333;
         display: flex;
         flex-direction: column;
         overflow: hidden;
@@ -204,55 +215,73 @@
       
       .videos-grid { 
         display: grid; 
-        gap: 16px;
+        gap: 8px;
         flex: 1;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        padding: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         align-content: start;
       }
       
       .videos-grid.two-videos { grid-template-columns: 1fr 1fr; }
       .videos-grid.three-videos { grid-template-columns: 1fr 1fr 1fr; }
       .videos-grid.four-videos { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
-      .videos-grid.five-plus-videos { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+      .videos-grid.five-plus-videos { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr); }
       
       .video-container {
         position: relative;
         background: #1a1a1a;
-        border-radius: 12px;
+        border-radius: 8px;
         overflow: hidden;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-        border: 1px solid #2a2a2a;
+        border: 2px solid transparent;
         display: flex;
         align-items: center;
         justify-content: center;
         min-height: 200px;
+        transition: border-color 0.3s ease;
+      }
+      
+      .video-container.active {
+        border-color: #4ade80;
       }
       
       .video-label {
         position: absolute;
-        top: 12px;
-        left: 12px;
-        background: rgba(0, 0, 0, 0.8);
+        bottom: 8px;
+        left: 8px;
+        background: rgba(0, 0, 0, 0.7);
         color: white;
-        padding: 6px 10px;
-        border-radius: 6px;
+        padding: 4px 8px;
+        border-radius: 4px;
         font-size: 12px;
         font-weight: 500;
-        text-transform: none;
-        letter-spacing: 0;
         z-index: 10;
-        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      
+      .mic-status {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #16a34a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        color: white;
+      }
+      
+      .mic-status.muted {
+        background: #dc2626;
       }
       
       video { 
         width: 100%; 
-        height: auto;
-        min-height: 200px;
-        max-height: 400px;
-        object-fit: contain;
-        background: #0f0f0f;
-        border-radius: 12px;
-        transition: all 0.2s ease;
+        height: 100%;
+        object-fit: cover;
+        background: #1a1a1a;
+        border-radius: 8px;
       }
       
       .video-container:hover video {
@@ -297,20 +326,40 @@
           width: 100%; 
           height: 200px; 
           border-left: none; 
-          border-top: 1px solid #2a2a2a; 
-          order: -1;
+          border-top: 1px solid #333333; 
+          order: 2;
         }
-        .video-section { padding: 12px; }
-        .videos-grid { grid-template-columns: 1fr !important; gap: 8px; }
-        .controls { flex-direction: column; padding: 12px; margin: 12px 0; }
-        .controls button, .controls input, .controls select { width: 100%; margin-bottom: 8px; }
-        header { padding: 12px 16px; }
-        video { min-height: 200px; max-height: 300px; }
-        .logo { font-size: 18px; }
-        .status-indicator { font-size: 12px; }
-        .call-controls { bottom: 16px; gap: 16px; padding: 14px 20px; }
-        .control-btn { width: 52px; height: 52px; font-size: 20px; }
-        .control-btn.primary { width: 76px; height: 76px; }
+        .video-section { padding: 0; }
+        .videos-grid { 
+          grid-template-columns: 1fr 1fr !important; 
+          gap: 6px;
+          padding: 12px;
+          grid-template-rows: 1fr 1fr;
+        }
+        .video-container { min-height: 160px; }
+        header { padding: 16px 20px; }
+        .room-title { font-size: 18px; }
+        .participants-count { font-size: 13px; }
+        .call-controls { 
+          bottom: 20px; 
+          gap: 20px; 
+          padding: 12px 24px; 
+          width: auto;
+          left: 50%;
+          transform: translateX(-50%);
+        }
+        .control-btn { width: 44px; height: 44px; }
+        .control-btn.primary { width: 52px; height: 52px; }
+        .control-btn svg { width: 20px; height: 20px; }
+        .control-label { font-size: 10px; }
+        .call-button-container { 
+          bottom: 30px; 
+          padding: 0 20px;
+        }
+        .call-button { 
+          padding: 14px 28px; 
+          font-size: 15px; 
+        }
       }
       
       @media (max-width: 480px) {
@@ -344,26 +393,26 @@
       }
       
       .participants-header {
-        padding: 20px;
-        border-bottom: 1px solid #2a2a2a;
+        padding: 16px 20px;
+        border-bottom: 1px solid #333333;
         flex-shrink: 0;
       }
       
       .participants-title {
-        font-size: 18px;
+        font-size: 16px;
         font-weight: 600;
         margin-bottom: 4px;
       }
       
       .participants-count {
-        font-size: 14px;
+        font-size: 12px;
         color: #8a8a8a;
       }
       
       .participants-list {
         flex: 1;
         overflow-y: auto;
-        padding: 12px;
+        padding: 8px 12px;
       }
       
       .participant-item {
@@ -371,8 +420,8 @@
         align-items: center;
         gap: 12px;
         padding: 8px 12px;
-        border-radius: 8px;
-        margin-bottom: 4px;
+        border-radius: 6px;
+        margin-bottom: 2px;
         transition: background-color 0.2s ease;
       }
       
@@ -381,16 +430,17 @@
       }
       
       .participant-avatar {
-        width: 32px;
-        height: 32px;
+        width: 28px;
+        height: 28px;
         border-radius: 50%;
         background: #5865f2;
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: 600;
-        font-size: 14px;
+        font-size: 12px;
         color: white;
+        flex-shrink: 0;
       }
       
       .participant-info {
@@ -399,7 +449,7 @@
       }
       
       .participant-name {
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 500;
         margin-bottom: 2px;
         white-space: nowrap;
@@ -408,14 +458,15 @@
       }
       
       .participant-status {
-        font-size: 12px;
+        font-size: 11px;
         color: #8a8a8a;
       }
       
       .participant-mic {
-        width: 16px;
-        height: 16px;
+        width: 14px;
+        height: 14px;
         color: #16a34a;
+        flex-shrink: 0;
       }
       
       .participant-mic.muted {
@@ -428,13 +479,13 @@
         left: 50%;
         transform: translateX(-50%);
         display: flex;
-        align-items: flex-end;
-        gap: 16px;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
         background: #2a2a2a;
-        padding: 14px 22px;
-        border-radius: 40px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        min-width: 300px;
+        padding: 16px 32px;
+        border-radius: 50px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
       }
       
       .room-input {
@@ -504,8 +555,8 @@
       }
       
       .control-btn {
-        width: 52px;
-        height: 52px;
+        width: 48px;
+        height: 48px;
         border-radius: 50%;
         border: none;
         cursor: pointer;
@@ -516,9 +567,20 @@
         transition: all 0.2s ease;
         position: relative;
       }
-      .control-btn.primary { width: 72px; height: 72px; }
-      .control-label { text-align: center; font-size: 12px; color: #8a8a8a; margin-top: 6px; }
-      .primary-wrap { display: flex; flex-direction: column; align-items: center; }
+      .control-btn.primary { width: 56px; height: 56px; }
+      .control-label { 
+        text-align: center; 
+        font-size: 11px; 
+        color: #b0b0b0; 
+        margin-top: 4px; 
+        font-weight: 500;
+      }
+      .primary-wrap { 
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        gap: 4px;
+      }
       .mic-pulse { box-shadow: 0 0 0 0 rgba(88,101,242,0.6); animation: pulseRing 2s infinite; }
       @keyframes pulseRing { 0% { box-shadow: 0 0 0 0 rgba(88,101,242,0.6);} 70% { box-shadow: 0 0 0 16px rgba(88,101,242,0);} 100% { box-shadow: 0 0 0 0 rgba(88,101,242,0);} }
       
@@ -538,7 +600,7 @@
       }
       
       .control-btn.mic.enabled {
-        background: #5865f2;
+        background: #3b82f6;
         color: white;
       }
       
@@ -563,9 +625,50 @@
         color: white;
       }
       
+      .control-btn.copy-link {
+        background: #3ba55d;
+        color: white;
+      }
+      
       .control-btn:hover {
         transform: scale(1.05);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      }
+      
+      .call-button-container {
+        position: fixed;
+        bottom: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        justify-content: center;
+      }
+      
+      .call-button {
+        background: #3b82f6;
+        color: white;
+        border: none;
+        border-radius: 50px;
+        padding: 16px 32px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+        transition: all 0.2s ease;
+      }
+      
+      .call-button:hover {
+        background: #2563eb;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 25px rgba(59, 130, 246, 0.5);
+      }
+      
+      .call-button svg {
+        width: 24px;
+        height: 24px;
       }
     </style>
   </head>
@@ -573,49 +676,27 @@
     <div class="wrap">
       <header>
         <div class="logo">
-          Adeita Video Chat
-        </div>
-        <div class="status-indicator">
-          <div class="status-dot" id="statusDot"></div>
-          <span id="status">Disconnected</span>
+          <div class="room-title" id="roomTitle">Adeita Vichat</div>
+          <div class="participants-count" id="participantsCount">Ready to connect</div>
         </div>
       </header>
 
-      <div class="room-info" id="roomInfo" style="display: none;">
-        <div style="font-weight: 600; margin-bottom: 8px;">Connected to room:</div>
-        <div class="room-id" id="currentRoom"></div>
-      </div>
 
       <div class="main-content">
         <div class="video-section">
-          <div class="controls" style="display: none;">
-            <!-- Старые контролы скрыты -->
-          </div>
-          
-          <div id="connectionProgress" style="display: none; margin: 16px 0;">
-            <div style="background: #1e1e1e; border-radius: 8px; padding: 12px; border: 1px solid #2a2a2a;">
-              <div style="font-size: 14px; margin-bottom: 8px; color: #ffffff;">Establishing connection...</div>
-              <div style="background: #2a2a2a; border-radius: 4px; height: 6px; overflow: hidden;">
-                <div id="progressBar" style="background: #5865f2; height: 100%; width: 0%; transition: width 0.3s ease;"></div>
-              </div>
-              <div id="progressText" style="font-size: 12px; margin-top: 8px; color: #8a8a8a;">Gathering ICE candidates...</div>
-            </div>
-          </div>
-
           <div class="videos-grid" id="videosGrid">
             <div class="video-container local-video">
-              <div class="video-label">Your Camera</div>
+              <div class="video-label">
+                <span>You</span>
+                <div class="mic-status" id="localMicStatus"></div>
+              </div>
               <video id="localVideo" autoplay playsinline muted></video>
             </div>
             <!-- Remote videos will be added dynamically -->
           </div>
         </div>
 
-        <div class="participants-section" id="participantsSection" style="display: none;">
-          <div class="participants-header">
-            <div class="participants-title" id="roomTitle">Room</div>
-            <div class="participants-count" id="participantsCount">0 participants</div>
-          </div>
+        <div class="participants-section" id="participantsSection">
           <div class="participants-list" id="participantsList">
             <!-- Participants will be added dynamically -->
           </div>
@@ -624,61 +705,67 @@
       
       <div id="errors"></div>
       
-      <div class="call-controls" id="callControls">
-        <div class="room-input" id="roomInput">
-          <input id="roomId" placeholder="Enter room ID..." />
-          <button id="joinBtn" class="control-btn join" title="Join Room"><span class="icon">➕</span></button>
-        </div>
-        
-        <button class="control-btn video enabled" id="toggleCam" title="Toggle Camera"><span class="icon">📷</span></button>
+      <!-- Кнопка звонка (показывается до подключения) -->
+      <div class="call-button-container" id="callButtonContainer">
+        <button class="call-button" id="callButton">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+          </svg>
+          <span>Начать звонок</span>
+        </button>
+      </div>
+
+      <!-- Панель управления (показывается после подключения) -->
+      <div class="call-controls" id="callControls" style="display: none;">
+        <button class="control-btn video" id="toggleCam" title="Video">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
+          </svg>
+          <div class="control-label">video</div>
+        </button>
 
         <div class="primary-wrap">
-          <button class="control-btn mic primary mic-pulse" id="toggleMic" title="Toggle Microphone"><span class="icon">🎤</span></button>
+          <button class="control-btn mic primary" id="toggleMic" title="Unmute">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
+            </svg>
+          </button>
           <div class="control-label" id="micLabel">Unmute</div>
         </div>
         
-        <div class="settings-dropdown" id="settingsDropdown">
-          <button class="control-btn settings" id="settingsBtn" title="Settings">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
-            </svg>
-          </button>
-          <div class="settings-content" id="settingsContent">
-            <select id="cameraSelect"></select>
-            <select id="micSelect"></select>
-          </div>
-        </div>
+        <button class="control-btn copy-link" id="copyLinkBtn" title="Copy link">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+          </svg>
+          <div class="control-label">share</div>
+        </button>
         
-        <button class="control-btn leave" id="hangupBtn" title="Leave Call"><span class="icon">❌</span></button>
+        <button class="control-btn leave" id="hangupBtn" title="leave">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.7l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.1-.7-.28-.79-.73-1.68-1.36-2.66-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/>
+          </svg>
+          <div class="control-label">leave</div>
+        </button>
       </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-      const statusEl = document.getElementById('status');
-      const statusDot = document.getElementById('statusDot');
-      const joinBtn = document.getElementById('joinBtn');
       const hangupBtn = document.getElementById('hangupBtn');
       const toggleMicBtn = document.getElementById('toggleMic');
       const toggleCamBtn = document.getElementById('toggleCam');
-      const roomIdInput = document.getElementById('roomId');
       const localVideo = document.getElementById('localVideo');
-      const cameraSelect = document.getElementById('cameraSelect');
-      const micSelect = document.getElementById('micSelect');
       const errorsEl = document.getElementById('errors');
       const videosGrid = document.getElementById('videosGrid');
-      const connectionProgress = document.getElementById('connectionProgress');
-      const progressBar = document.getElementById('progressBar');
-      const progressText = document.getElementById('progressText');
       const participantsSection = document.getElementById('participantsSection');
       const roomTitle = document.getElementById('roomTitle');
       const participantsCount = document.getElementById('participantsCount');
       const participantsList = document.getElementById('participantsList');
       const callControls = document.getElementById('callControls');
-      const settingsDropdown = document.getElementById('settingsDropdown');
-      const settingsBtn = document.getElementById('settingsBtn');
-      const settingsContent = document.getElementById('settingsContent');
-      const roomInput = document.getElementById('roomInput');
+      const localMicStatus = document.getElementById('localMicStatus');
+      const callButton = document.getElementById('callButton');
+      const callButtonContainer = document.getElementById('callButtonContainer');
+      const copyLinkBtn = document.getElementById('copyLinkBtn');
 
       const params = new URLSearchParams(window.location.search);
       const SIGNAL_URL = params.get('signal') || window.location.origin;
@@ -695,24 +782,97 @@
       let roomId = '';
       let peers = new Map(); // peerId -> { pc, remoteStream }
       let localStream = null;
+      let isRoomCreator = false; // Флаг, что мы создали комнату
+
+      // Генерация уникального ID комнаты
+      function generateRoomId() {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        let result = '';
+        for (let i = 0; i < 8; i++) {
+          result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
+      }
+
+      // Копирование ссылки в буфер обмена
+      async function copyRoomLink() {
+        const roomUrl = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
+        try {
+          await navigator.clipboard.writeText(roomUrl);
+          // Показываем уведомление о копировании
+          showNotification('Ссылка скопирована в буфер обмена!');
+        } catch (err) {
+          // Fallback для старых браузеров
+          const textArea = document.createElement('textarea');
+          textArea.value = roomUrl;
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+          showNotification('Ссылка скопирована в буфер обмена!');
+        }
+      }
+
+      // Показ уведомления
+      function showNotification(message) {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: #10b981;
+          color: white;
+          padding: 12px 20px;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 500;
+          z-index: 1000;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+          animation: slideIn 0.3s ease;
+        `;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+          notification.style.animation = 'slideOut 0.3s ease';
+          setTimeout(() => notification.remove(), 300);
+        }, 2000);
+      }
+
+      // Добавляем CSS для анимации уведомлений
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes slideIn {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+          from { transform: translateX(0); opacity: 1; }
+          to { transform: translateX(100%); opacity: 0; }
+        }
+      `;
+      document.head.appendChild(style);
 
       // UI State Management
       function updateStatus(status, dotClass = '') {
-        statusEl.textContent = status;
-        statusDot.className = `status-dot ${dotClass}`;
+        // Обновляем заголовок комнаты
+        if (roomId) {
+          roomTitle.textContent = `Room ${roomId}`;
+        } else {
+          roomTitle.textContent = 'Adeita Vichat';
+        }
+        participantsCount.textContent = `${1 + peers.size} participant${1 + peers.size !== 1 ? 's' : ''}`;
       }
 
       function showControls(show) {
         participantsSection.style.display = show ? 'flex' : 'none';
-        settingsDropdown.style.display = show ? 'block' : 'none';
-        
-        // Скрываем поле ввода комнаты при подключении
-        roomInput.style.display = show ? 'none' : 'flex';
+        callControls.style.display = show ? 'flex' : 'none';
+        callButtonContainer.style.display = show ? 'none' : 'flex';
       }
 
       function updateRoomInfo(room) {
         if (room) {
-          roomTitle.textContent = room;
+          roomTitle.textContent = `Room ${room}`;
           updateParticipantsList();
         }
       }
@@ -751,7 +911,7 @@
         
         const status = document.createElement('div');
         status.className = 'participant-status';
-        status.textContent = isLocal ? 'You' : 'Connected';
+        status.textContent = isLocal ? 'You' : 'listening';
         
         info.appendChild(nameEl);
         info.appendChild(status);
@@ -804,7 +964,10 @@
         
         const label = document.createElement('div');
         label.className = 'video-label';
-        label.textContent = `Peer ${peerId.substring(0, 8)}`;
+        label.innerHTML = `
+          <span>Peer ${peerId.substring(0, 8)}</span>
+          <div class="mic-status"></div>
+        `;
         
         const video = document.createElement('video');
         video.autoplay = true;
@@ -844,26 +1007,12 @@
         { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' }
       ];
 
-      async function listDevices() {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        cameraSelect.innerHTML = '';
-        micSelect.innerHTML = '';
-        for (const d of devices) {
-          const opt = document.createElement('option');
-          opt.value = d.deviceId;
-          opt.textContent = `${d.kind}: ${d.label || d.deviceId}`;
-          if (d.kind === 'videoinput') cameraSelect.appendChild(opt);
-          if (d.kind === 'audioinput') micSelect.appendChild(opt.cloneNode(true));
-        }
-      }
 
       async function getLocalStream() {
-        const camId = cameraSelect.value || undefined;
-        const micId = micSelect.value || undefined;
         try {
           localStream = await navigator.mediaDevices.getUserMedia({
-            audio: micId ? { deviceId: { exact: micId } } : true,
-            video: camId ? { deviceId: { exact: camId } } : { width: 1280, height: 720 }
+            audio: true,
+            video: { width: 1280, height: 720 }
           });
           localVideo.srcObject = localStream;
           clearError();
@@ -884,22 +1033,10 @@
       function updateButtonStates() {
         if (!localStream) {
           // Нет стрима - кнопки в выключенном состоянии
-          toggleMicBtn.className = 'control-btn mic';
+          toggleMicBtn.className = 'control-btn mic primary';
           toggleCamBtn.className = 'control-btn video';
-          
-          // Иконки выключенных устройств
-          const micIcon = toggleMicBtn.querySelector('svg');
-          const camIcon = toggleCamBtn.querySelector('svg');
-          
-          if (micIcon) {
-            micIcon.innerHTML = `<path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
-             <line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2"/>`;
-          }
-          
-          if (camIcon) {
-            camIcon.innerHTML = `<path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
-             <line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2"/>`;
-          }
+          document.getElementById('micLabel').textContent = 'Unmute';
+          localMicStatus.className = 'mic-status muted';
           return;
         }
         
@@ -911,26 +1048,14 @@
         const isVideoEnabled = videoTracks.length > 0 && videoTracks.every(t => t.enabled);
         
         // Обновляем классы кнопок
-        toggleMicBtn.className = `control-btn mic ${isAudioEnabled ? 'enabled' : ''}`;
+        toggleMicBtn.className = `control-btn mic primary ${isAudioEnabled ? 'enabled' : ''}`;
         toggleCamBtn.className = `control-btn video ${isVideoEnabled ? 'enabled' : ''}`;
         
-        // Обновляем иконки
-        const micIcon = toggleMicBtn.querySelector('svg');
-        const camIcon = toggleCamBtn.querySelector('svg');
+        // Обновляем лейблы
+        document.getElementById('micLabel').textContent = isAudioEnabled ? 'Mute' : 'Unmute';
         
-        if (micIcon) {
-          micIcon.innerHTML = isAudioEnabled ?
-            `<path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>` :
-            `<path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
-             <line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2"/>`;
-        }
-        
-        if (camIcon) {
-          camIcon.innerHTML = isVideoEnabled ?
-            `<path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>` :
-            `<path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
-             <line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" stroke-width="2"/>`;
-        }
+        // Обновляем статус микрофона в видео
+        localMicStatus.className = `mic-status ${isAudioEnabled ? '' : 'muted'}`;
       }
 
       function createPeerConnection(peerId) {
@@ -1116,15 +1241,27 @@
         }
         peers.clear();
         
+        // Останавливаем локальный стрим
+        if (localStream) {
+          localStream.getTracks().forEach(track => track.stop());
+          localStream = null;
+        }
+        
+        // Сбрасываем состояние
+        roomId = '';
+        isRoomCreator = false;
+        
         showControls(false);
         updateStatus('Disconnected', '');
         clearError();
         updateVideoGridLayout();
+        
+        // Показываем кнопку создания новой комнаты
+        callButtonContainer.style.display = 'flex';
       }
 
       toggleMicBtn.onclick = () => {
         if (!localStream) {
-          // Если нет стрима, попробуем получить доступ
           getLocalStream();
           return;
         }
@@ -1137,16 +1274,11 @@
         
         // Обновляем визуальное состояние кнопок
         updateButtonStates();
-        const micLabel = document.getElementById('micLabel');
-        if (micLabel) {
-          micLabel.textContent = isAudioEnabled ? 'Unmute' : 'Mute';
-        }
         updateParticipantsList();
       };
       
       toggleCamBtn.onclick = () => {
         if (!localStream) {
-          // Если нет стрима, попробуем получить доступ
           getLocalStream();
           return;
         }
@@ -1232,58 +1364,67 @@
         showControls(false);
       }
 
-      joinBtn.onclick = async () => {
-        if (joinBtn.classList.contains('leave')) {
-          leaveRoom();
-          return;
+      // Проверяем URL параметры при загрузке
+      function checkUrlParams() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomParam = urlParams.get('room');
+        
+        if (roomParam) {
+          // Если есть параметр room в URL, присоединяемся к существующей комнате
+          roomId = roomParam;
+          isRoomCreator = false;
+          joinExistingRoom();
+        } else {
+          // Если нет параметра, показываем кнопку создания комнаты
+          isRoomCreator = true;
         }
+      }
 
-        roomId = roomIdInput.value || 'test';
-        updateStatus('Joining...', 'connecting');
+      // Присоединение к существующей комнате
+      async function joinExistingRoom() {
         try {
-          await listDevices();
-          await getLocalStream(); // запросим доступ при клике (жест пользователя)
+          await getLocalStream();
           socket.emit('join', roomId);
           updateRoomInfo(roomId);
-          // Показываем панель управления и участников сразу после входа в комнату
           showControls(true);
           updateParticipantsList();
-          
-          // Обновляем кнопку на "Leave"
-          joinBtn.innerHTML = `
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.7l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.1-.7-.28-.79-.73-1.68-1.36-2.66-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/>
-            </svg>
-          `;
-          joinBtn.className = 'control-btn join leave';
-          joinBtn.title = 'Leave Room';
-          roomIdInput.disabled = true;
           updateStatus('Connected to room', 'connected');
         } catch (e) {
           updateStatus('Error', '');
           showError(`Failed to join room: ${e.message}`);
         }
-      };
-      
-      hangupBtn.onclick = hangup;
-      
-      // Обработчик для шестеренки настроек
-      settingsBtn.onclick = (e) => {
-        e.stopPropagation();
-        settingsContent.style.display = settingsContent.style.display === 'block' ? 'none' : 'block';
-      };
-      
-      // Закрываем дропдаун при клике вне его
-      document.addEventListener('click', (e) => {
-        if (!settingsDropdown.contains(e.target)) {
-          settingsContent.style.display = 'none';
-        }
-      });
+      }
 
-      // ask for perms early
-      // На некоторых браузерах (iOS/Safari) запрашивать доступ вне жеста пользователя нельзя —
-      // поэтому просто пытаемся получить список устройств. Запросим доступ при Join.
-      navigator.mediaDevices.enumerateDevices().then(() => {}).catch(() => {});
+      // Создание новой комнаты
+      async function createNewRoom() {
+        roomId = generateRoomId();
+        isRoomCreator = true;
+        
+        try {
+          await getLocalStream();
+          socket.emit('join', roomId);
+          updateRoomInfo(roomId);
+          showControls(true);
+          updateParticipantsList();
+          updateStatus('Connected to room', 'connected');
+          
+          // Показываем уведомление о создании комнаты
+          showNotification(`Комната ${roomId} создана!`);
+        } catch (e) {
+          updateStatus('Error', '');
+          showError(`Failed to create room: ${e.message}`);
+        }
+      }
+      
+      // Обработчики событий
+      hangupBtn.onclick = hangup;
+      callButton.onclick = createNewRoom;
+      copyLinkBtn.onclick = copyRoomLink;
+
+      // Инициализация при загрузке
+      window.addEventListener('load', () => {
+        checkUrlParams();
+      });
     </script>
   </body>
   </html>
