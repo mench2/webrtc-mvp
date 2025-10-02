@@ -2190,9 +2190,6 @@
         const urlParams = new URLSearchParams(window.location.search);
         const urlRoom = urlParams.get('room');
 
-        // Попросим имя всегда, сервер после set-user-name сам отправит список пиров/комнату
-        showNameModal();
-
         // Если уже есть roomId в URL — сохраним для отображения
         if (urlRoom) {
           roomId = urlRoom;
@@ -2203,15 +2200,13 @@
           updateRoomInfo(roomId);
         }
 
-        // После того как сервер подтвердит имя, объявим/войдём в комнату
-        socket.once('user-name-set', ({ socketId }) => {
-          if (socketId !== socket.id) return;
-          if (urlRoom) {
-            socket.emit('join-room', { roomId: urlRoom });
-          } else {
-            socket.emit('create-or-join-room', { roomId });
-          }
-        });
+        // Сначала присоединяемся к комнате, затем просим имя
+        const joinRoom = () => socket.emit('join', roomId);
+        if (socket.connected) joinRoom();
+        else socket.once('connect', joinRoom);
+
+        // Спрашиваем имя пользователя
+        showNameModal();
       }
 
       // Инициализация при загрузке
