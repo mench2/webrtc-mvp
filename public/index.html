@@ -1185,8 +1185,14 @@
         }
         
         userName = name;
-        // Модалка скроется после подтверждения от сервера
+        hideNameModal();
+        
+        // Отправляем имя на сервер
         socket.emit('set-user-name', { userName: userName });
+        
+        // Обновляем интерфейс
+        updateParticipantsList();
+        showNotification(`Добро пожаловать, ${userName}!`);
       }
 
       // Функции для работы с чатом
@@ -1250,16 +1256,18 @@
       function sendChatMessage() {
         const text = chatInput.value.trim();
         if (!text || !userName) return;
-
-        // Отправляем только text и timestamp
+        
+        // Отправляем сообщение на сервер
         socket.emit('chat-message', {
+          author: userName,
           text: text,
           timestamp: new Date()
         });
-
+        
         // Добавляем сообщение локально
         addChatMessage(userName, text, true);
-
+        
+        // Очищаем поле ввода
         chatInput.value = '';
       }
 
@@ -1603,20 +1611,6 @@
           
           // Применяем новые настройки ко всем существующим соединениям
           updateVideoQualityForAllPeers();
-
-          // Добавляем/подменяем треки во все уже созданные соединения
-          for (const [peerId, peer] of peers.entries()) {
-            const pc = peer.pc;
-            const existingSenders = pc.getSenders();
-            for (const track of localStream.getTracks()) {
-              const sameKindSender = existingSenders.find(s => s.track && s.track.kind === track.kind);
-              if (sameKindSender) {
-                try { await sameKindSender.replaceTrack(track); } catch {}
-              } else {
-                pc.addTrack(track, localStream);
-              }
-            }
-          }
           
         } catch (e) {
           // Если высокое качество не работает, пробуем среднее
@@ -2021,18 +2015,6 @@
         callButtonContainer.style.display = 'flex';
       }
 
-      // Кнопка «Начать звонок»: запрашиваем медиа и инициируем звонки
-      callButton.addEventListener('click', async () => {
-        try {
-          if (!localStream) await getLocalStream(currentVideoQuality);
-          // Если уже есть подключенные пиры — инициируем офферы
-          await call();
-          showControls(true);
-        } catch (e) {
-          showError(`Не удалось начать звонок: ${e && e.message ? e.message : e}`);
-        }
-      });
-
       toggleMicBtn.onclick = () => {
         if (!localStream) {
           getLocalStream();
@@ -2129,54 +2111,11 @@
         removePeer(socketId);
       });
       
-      // --- ИСПРАВЛЕНИЯ ДЛЯ СОВМЕСТИМОСТИ С СЕРВЕРОМ ---
-      
-      // 1. Не отправляем author в chat-message, сервер сам подставляет имя
-      function sendChatMessage() {
-        const text = chatInput.value.trim();
-        if (!text || !userName) return;
-
-        // Отправляем только text и timestamp
-        socket.emit('chat-message', {
-          text: text,
-          timestamp: new Date()
-        });
-
-        // Добавляем сообщение локально
-        addChatMessage(userName, text, true);
-
-        chatInput.value = '';
-      }
-
-      // 2. Обработка ошибок с типом
-      socket.on('error', ({ type, message }) => {
-        console.error('Server error:', type, message);
-        if (type === 'room') {
-          showNotification(`Ошибка комнаты: ${message}`);
-          showError(message);
-        } else if (type === 'username') {
-          showNotification(`Ошибка имени: ${message}`);
-          showNameModal();
-        } else if (type === 'chat') {
-          showNotification(`Ошибка чата: ${message}`);
-        } else if (type === 'signal') {
-          showNotification(`Ошибка соединения: ${message}`);
-        } else {
-          showNotification(`Ошибка: ${message}`);
-        }
-      });
-
-      // 3. При получении user-name-set обновляем локальное имя пользователя, если это наш сокет
       socket.on('user-name-set', ({ socketId, userName: peerUserName }) => {
         console.log(`User ${socketId} set name to: ${peerUserName}`);
         userNames.set(socketId, peerUserName);
-        if (socketId === socket.id) {
-          userName = peerUserName;
-          hideNameModal();
-          showNotification(`Добро пожаловать, ${userName}!`);
-        }
         updateParticipantsList();
-
+        
         // Обновляем имя в видео если оно уже создано
         const videoContainer = document.getElementById(`video-${socketId}`);
         if (videoContainer) {
@@ -2186,54 +2125,129 @@
           }
         }
       });
+      
+      socket.on('chat-message', ({ author, text, timestamp }) => {
+        console.log(`Chat message from ${author}: ${text}`);
+        addChatMessage(author, text, false);
+      });
+      
+      socket.on('error', ({ message }) => {
+        console.error('Server error:', message);
+        showNotification(`Ошибка: ${message}`);
+      });
+      
+      socket.on('signal', handleSignal);
 
-      // 4. В confirmUserName не скрываем модалку, пока не придет подтверждение от сервера
-      function confirmUserName() {
-        const name = userNameInput.value.trim();
-        if (name.length < 2) {
-          showNotification('Имя должно содержать минимум 2 символа');
-          return;
+      function leaveRoom() {
+        socket.emit('leave', roomId);
+        hangup();
+        updateRoomInfo('');
+        
+        // Восстанавливаем кнопку Join
+        joinBtn.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+          </svg>
+        `;
+        joinBtn.className = 'control-btn join';
+        joinBtn.title = 'Join Room';
+        roomIdInput.disabled = false;
+        updateStatus('Disconnected', '');
+        clearError();
+        showControls(false);
+      }
+
+      // Проверяем URL параметры при загрузке
+      function checkUrlParams() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomParam = urlParams.get('room');
+        
+        if (roomParam) {
+          // Если есть параметр room в URL, присоединяемся к существующей комнате
+          roomId = roomParam;
+          isRoomCreator = false;
+          joinExistingRoom();
+        } else {
+          // Если нет параметра, показываем кнопку создания комнаты
+          isRoomCreator = true;
         }
-        if (name.length > 20) {
-          showNotification('Имя не должно превышать 20 символов');
+      }
+
+      // Присоединение к существующей комнате
+      async function joinExistingRoom() {
+        // Сначала показываем модальное окно для ввода имени
+        if (!userName) {
+          showNameModal();
           return;
         }
         
-        userName = name;
-        // Модалка скроется после подтверждения от сервера
-        socket.emit('set-user-name', { userName: userName });
-      }
-
-      // Привязываем события к модалке имени
-      confirmNameBtn.addEventListener('click', () => confirmUserName());
-      userNameInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') confirmUserName();
-      });
-
-      // Разбор параметров URL и показ модалки имени
-      function checkUrlParams() {
-        // /?room=XXXX — присоединяемся к комнате, иначе создаём id, но ждём подтверждения имени
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlRoom = urlParams.get('room');
-
-        // Если уже есть roomId в URL — сохраним для отображения
-        if (urlRoom) {
-          roomId = urlRoom;
+        try {
+          console.log(`Joining existing room: ${roomId}`);
+          await getLocalStream();
+          socket.emit('join', roomId);
           updateRoomInfo(roomId);
-        } else {
-          // Сгенерируем локально, но объявим серверу после установки имени
-          roomId = generateRoomId();
-          updateRoomInfo(roomId);
+          showControls(true);
+          updateParticipantsList();
+          updateStatus('Connected to room', 'connected');
+        } catch (e) {
+          console.error('Failed to join existing room:', e);
+          updateStatus('Error', '');
+          showError(`Failed to join room: ${e.message}`);
         }
-
-        // Сначала присоединяемся к комнате, затем просим имя
-        const joinRoom = () => socket.emit('join', roomId);
-        if (socket.connected) joinRoom();
-        else socket.once('connect', joinRoom);
-
-        // Спрашиваем имя пользователя
-        showNameModal();
       }
+
+      // Создание новой комнаты
+      async function createNewRoom() {
+        // Сначала показываем модальное окно для ввода имени
+        if (!userName) {
+          showNameModal();
+          return;
+        }
+        
+        roomId = generateRoomId();
+        isRoomCreator = true;
+        
+        try {
+          console.log(`Creating new room: ${roomId}`);
+          await getLocalStream();
+          socket.emit('join', roomId);
+          updateRoomInfo(roomId);
+          showControls(true);
+          updateParticipantsList();
+          updateStatus('Connected to room', 'connected');
+          
+          // Показываем уведомление о создании комнаты
+          showNotification(`Комната ${roomId} создана!`);
+        } catch (e) {
+          console.error('Failed to create room:', e);
+          updateStatus('Error', '');
+          showError(`Failed to create room: ${e.message}`);
+        }
+      }
+      
+      // Обработчики событий
+      hangupBtn.onclick = hangup;
+      callButton.onclick = createNewRoom;
+      copyLinkBtn.onclick = copyRoomLink;
+      qualityBtn.onclick = cycleVideoQuality;
+      screenShareBtn.onclick = toggleScreenShare;
+      confirmNameBtn.onclick = confirmUserName;
+      chatSendBtn.onclick = sendChatMessage;
+      chatToggle.onclick = toggleChat;
+      
+      // Обработчик Enter в поле ввода имени
+      userNameInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          confirmUserName();
+        }
+      });
+      
+      // Обработчик Enter в поле ввода чата
+      chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          sendChatMessage();
+        }
+      });
 
       // Инициализация при загрузке
       window.addEventListener('load', () => {
