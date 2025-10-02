@@ -1123,20 +1123,12 @@
         return result;
       }
 
-      // Генерация случайного имени пользователя
-      function generateRandomName() {
-        const adjectives = ['Быстрый', 'Умный', 'Веселый', 'Спокойный', 'Смелый', 'Дружелюбный', 'Креативный', 'Мудрый'];
-        const nouns = ['Тигр', 'Орел', 'Дельфин', 'Волк', 'Лев', 'Сокол', 'Медведь', 'Лиса'];
-        const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
-        const noun = nouns[Math.floor(Math.random() * nouns.length)];
-        const num = Math.floor(Math.random() * 999) + 1;
-        return `${adj}${noun}${num}`;
-      }
+      // Убрана генерация случайного имени пользователя
 
       // Показать модальное окно для ввода имени
       function showNameModal() {
         nameModal.style.display = 'flex';
-        userNameInput.value = generateRandomName();
+        userNameInput.value = '';
         userNameInput.focus();
         userNameInput.select();
       }
@@ -1395,14 +1387,9 @@
       `;
       document.head.appendChild(style);
 
-      // UI State Management
-      function updateStatus(status, dotClass = '') {
-        // Обновляем заголовок комнаты
-        if (roomId) {
-          roomTitle.textContent = `Room ${roomId}`;
-        } else {
-          roomTitle.textContent = 'Adeita Vichat';
-        }
+      // Убран status-индикатор; оставляем только обновление заголовка/счётчика при необходимости
+      function updateHeaderCounts() {
+        if (roomId) roomTitle.textContent = `Room ${roomId}`; else roomTitle.textContent = 'Adeita Vichat';
         participantsCount.textContent = `${1 + peers.size} participant${1 + peers.size !== 1 ? 's' : ''}`;
       }
 
@@ -1799,7 +1786,6 @@
             updateProgress(70, 'Connecting...');
           } else if (pc.connectionState === 'connected') {
             updateProgress(100, 'Connected!');
-            updateStatus(`Connected to ${peers.size} peer(s)`, 'connected');
             showControls(true);
             setTimeout(() => showProgress(false), 1000);
             
@@ -1807,7 +1793,6 @@
             startQualityMonitoring(peerId);
           } else if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
             console.error(`WebRTC connection failed/disconnected with ${peerId}`);
-            updateStatus(`Connection issues with ${peers.size} peer(s)`, '');
             showProgress(false);
             // Не удаляем пира сразу, возможно это временная проблема
           }
@@ -1907,11 +1892,9 @@
 
       async function retryConnections() {
         console.log('Retrying all connections...');
-        updateStatus('Retrying connections...', 'connecting');
         
         // Просто перезапускаем звонки со всеми пирами
         await call();
-        updateStatus('Retrying connections...', 'connecting');
       }
 
       async function handleSignal({ from, data }) {
@@ -1989,7 +1972,6 @@
         isScreenSharing = false;
         
         showControls(false);
-        updateStatus('Disconnected', '');
         clearError();
         updateVideoGridLayout();
         
@@ -2032,17 +2014,14 @@
       };
 
       socket.on('connect', () => {
-        updateStatus('Connected to server', 'connected');
         clearError();
         console.log('Connected to signaling server');
       });
       socket.on('disconnect', () => {
-        updateStatus('Disconnected from server', '');
         showControls(false);
         console.log('Disconnected from signaling server');
       });
       socket.on('connect_error', (err) => { 
-        updateStatus('Connection Error', '');
         showError('Failed to connect to signaling server');
         console.error('Connection error:', err); 
       });
@@ -2129,7 +2108,6 @@
         joinBtn.className = 'control-btn join';
         joinBtn.title = 'Join Room';
         roomIdInput.disabled = false;
-        updateStatus('Disconnected', '');
         clearError();
         showControls(false);
       }
@@ -2168,10 +2146,8 @@
           updateRoomInfo(roomId);
           showControls(true);
           updateParticipantsList();
-          updateStatus('Connected to room', 'connected');
         } catch (e) {
           console.error('Failed to join existing room:', e);
-          updateStatus('Error', '');
           showError(`Failed to join room: ${e.message}`);
         }
       }
@@ -2194,13 +2170,11 @@
           updateRoomInfo(roomId);
           showControls(true);
           updateParticipantsList();
-          updateStatus('Connected to room', 'connected');
           
           // Показываем уведомление о создании комнаты
           showNotification(`Комната ${roomId} создана!`);
         } catch (e) {
           console.error('Failed to create room:', e);
-          updateStatus('Error', '');
           showError(`Failed to create room: ${e.message}`);
         }
       }
