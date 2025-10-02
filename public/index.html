@@ -1410,6 +1410,8 @@
         participantsSection.style.display = show ? 'flex' : 'none';
         callControls.style.display = show ? 'flex' : 'none';
         callButtonContainer.style.display = show ? 'none' : 'flex';
+        // Перестраиваем сетку при переключении UI
+        updateVideoGridLayout();
       }
 
       function updateRoomInfo(room) {
@@ -2230,6 +2232,8 @@
       // Инициализация при загрузке
       window.addEventListener('load', () => {
         checkUrlParams();
+        // Применим начальную раскладку (один участник)
+        updateVideoGridLayout();
       });
     </script>
   </body>
