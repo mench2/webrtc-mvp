@@ -387,6 +387,9 @@
         min-height: 180px;
         transition: border-color 0.3s ease;
       }
+
+/* Убираем надпись You на локальном видео */
+.local-video .video-label { display: none; }
       
       .video-container.active {
         border-color: #0088cc;
@@ -490,14 +493,9 @@
         .participants-count { font-size: 13px; }
         /* Прячем чат на мобильных */
         .chat-section { display: none !important; }
-        .call-controls { 
-          bottom: 20px; 
-          gap: 20px; 
-          padding: 12px 24px; 
-          width: auto;
-          left: 50%;
-          transform: translateX(-50%);
-        }
+        /* Прячем колонку участников на мобильных */
+        .participants-section { display: none !important; }
+        .call-controls { bottom: 0; left: 0; right: 0; transform: none; gap: 12px; padding: 10px calc(12px + env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left)); justify-content: space-around; }
         .control-btn { width: 44px; height: 44px; }
         .control-btn.primary { width: 52px; height: 52px; }
         .control-btn svg { width: 20px; height: 20px; }
@@ -623,21 +621,22 @@
         color: #dc2626;
       }
       
-      .call-controls {
+.call-controls {
         position: fixed;
-        bottom: 24px;
-        left: 50%;
-        transform: translateX(-50%);
+        bottom: 0;
+        left: 0;
+        right: 0;
+        transform: none;
         display: flex;
         align-items: center;
-        justify-content: center;
-        gap: 24px;
-        background: rgba(0, 0, 0, 0.8);
+        justify-content: space-around;
+        gap: 16px;
+        background: rgba(0, 0, 0, 0.85);
         backdrop-filter: blur(20px);
-        padding: 16px 32px;
-        border-radius: 50px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 10px calc(12px + env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));
+        border-radius: 0;
+        box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.5);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
       }
       
       .room-input {
@@ -2124,6 +2123,7 @@
         if (isMobile) {
           isChatVisible = false;
           chatSection.style.display = 'none';
+          participantsSection.style.display = 'none';
         }
 
         if (roomParam) {
