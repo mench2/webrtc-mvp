@@ -2178,6 +2178,42 @@
         socket.emit('set-user-name', { userName: userName });
       }
 
+      // Привязываем события к модалке имени
+      confirmNameBtn.addEventListener('click', () => confirmUserName());
+      userNameInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') confirmUserName();
+      });
+
+      // Разбор параметров URL и показ модалки имени
+      function checkUrlParams() {
+        // /?room=XXXX — присоединяемся к комнате, иначе создаём id, но ждём подтверждения имени
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlRoom = urlParams.get('room');
+
+        // Попросим имя всегда, сервер после set-user-name сам отправит список пиров/комнату
+        showNameModal();
+
+        // Если уже есть roomId в URL — сохраним для отображения
+        if (urlRoom) {
+          roomId = urlRoom;
+          updateRoomInfo(roomId);
+        } else {
+          // Сгенерируем локально, но объявим серверу после установки имени
+          roomId = generateRoomId();
+          updateRoomInfo(roomId);
+        }
+
+        // После того как сервер подтвердит имя, объявим/войдём в комнату
+        socket.once('user-name-set', ({ socketId }) => {
+          if (socketId !== socket.id) return;
+          if (urlRoom) {
+            socket.emit('join-room', { roomId: urlRoom });
+          } else {
+            socket.emit('create-or-join-room', { roomId });
+          }
+        });
+      }
+
       // Инициализация при загрузке
       window.addEventListener('load', () => {
         checkUrlParams();
