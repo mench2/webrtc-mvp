@@ -1603,6 +1603,20 @@
           
           // Применяем новые настройки ко всем существующим соединениям
           updateVideoQualityForAllPeers();
+
+          // Добавляем/подменяем треки во все уже созданные соединения
+          for (const [peerId, peer] of peers.entries()) {
+            const pc = peer.pc;
+            const existingSenders = pc.getSenders();
+            for (const track of localStream.getTracks()) {
+              const sameKindSender = existingSenders.find(s => s.track && s.track.kind === track.kind);
+              if (sameKindSender) {
+                try { await sameKindSender.replaceTrack(track); } catch {}
+              } else {
+                pc.addTrack(track, localStream);
+              }
+            }
+          }
           
         } catch (e) {
           // Если высокое качество не работает, пробуем среднее
@@ -2006,6 +2020,18 @@
         // Показываем кнопку создания новой комнаты
         callButtonContainer.style.display = 'flex';
       }
+
+      // Кнопка «Начать звонок»: запрашиваем медиа и инициируем звонки
+      callButton.addEventListener('click', async () => {
+        try {
+          if (!localStream) await getLocalStream(currentVideoQuality);
+          // Если уже есть подключенные пиры — инициируем офферы
+          await call();
+          showControls(true);
+        } catch (e) {
+          showError(`Не удалось начать звонок: ${e && e.message ? e.message : e}`);
+        }
+      });
 
       toggleMicBtn.onclick = () => {
         if (!localStream) {
