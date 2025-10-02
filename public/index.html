@@ -368,6 +368,8 @@
         align-content: start;
       }
       
+      /* Новый режим: когда только локальная камера — показывать 2x2 */
+      .videos-grid.one-video { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
       .videos-grid.two-videos { grid-template-columns: 1fr 1fr; }
       .videos-grid.three-videos { grid-template-columns: 1fr 1fr 1fr; }
       .videos-grid.four-videos { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
@@ -382,7 +384,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        min-height: 200px;
+        min-height: 180px;
         transition: border-color 0.3s ease;
       }
       
@@ -1490,7 +1492,8 @@
         const totalVideos = 1 + peers.size; // local + remote
         videosGrid.className = 'videos-grid';
         
-        if (totalVideos === 2) videosGrid.classList.add('two-videos');
+        if (totalVideos === 1) videosGrid.classList.add('one-video');
+        else if (totalVideos === 2) videosGrid.classList.add('two-videos');
         else if (totalVideos === 3) videosGrid.classList.add('three-videos');
         else if (totalVideos === 4) videosGrid.classList.add('four-videos');
         else if (totalVideos >= 5) videosGrid.classList.add('five-plus-videos');
