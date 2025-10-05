@@ -677,8 +677,23 @@
 
       /* Submenu above settings */
       .settings-fab-wrap { position: relative; display: flex; align-items: center; }
-      .settings-submenu { position: absolute; bottom: 70px; left: 0; display: none; flex-direction: column; gap: 12px; }
-      .settings-submenu.show { display: flex; }
+      .settings-submenu { 
+        position: absolute; 
+        bottom: 70px; 
+        left: 0; 
+        display: flex; 
+        flex-direction: column; 
+        gap: 12px; 
+        opacity: 0; 
+        transform: translateY(12px) scale(0.98); 
+        pointer-events: none; 
+        transition: opacity 200ms ease, transform 200ms ease; 
+      }
+      .settings-submenu.show { 
+        opacity: 1; 
+        transform: translateY(0) scale(1); 
+        pointer-events: auto; 
+      }
       .settings-pill { display: flex; align-items: center; gap: 12px; background: #e6d8ef; color: #5b3f8c; border-radius: 28px; padding: 14px 20px; font-weight: 700; border: 1px solid rgba(0,0,0,0.05); }
       .settings-pill .icon { font-size: 22px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; width: 24px; }
       
