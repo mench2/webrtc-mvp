@@ -1161,13 +1161,8 @@
         updateParticipantsList();
         showNotification(`Добро пожаловать, ${userName}!`);
 
-        // Если мы пришли по ссылке с room — сразу присоединяемся
-        if (roomId && isRoomCreator === false) {
-          joinExistingRoom();
-        } else if (isRoomCreator === true && !roomId) {
-          // Если мы создатель и ещё нет roomId — создаём
-          createNewRoom();
-        }
+        // Больше не авто-присоединяемся/не создаем комнату после ввода имени
+        // Действие выполняется только по кнопке
       }
 
       // Функции для работы с чатом
@@ -2132,7 +2127,6 @@
           isRoomCreator = false;
           // Кнопка действует как Join
           callButton.onclick = joinExistingRoom;
-          joinExistingRoom();
         } else {
           // Если нет параметра, показываем кнопку создания комнаты
           isRoomCreator = true;
