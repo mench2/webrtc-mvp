@@ -1792,7 +1792,7 @@
           // Нет стрима - кнопки в выключенном состоянии
           toggleMicBtn.className = 'control-btn mic primary';
           toggleCamBtn.className = 'control-btn video';
-          document.getElementById('micLabel').textContent = 'Unmute';
+          // label удалён в новом UI
           localMicStatus.className = 'mic-status muted';
           return;
         }
@@ -1809,7 +1809,7 @@
         toggleCamBtn.className = `control-btn video ${isVideoEnabled ? 'enabled' : ''}`;
         
         // Обновляем лейблы
-        document.getElementById('micLabel').textContent = isAudioEnabled ? 'Mute' : 'Unmute';
+        // label удалён в новом UI
         
         // Обновляем статус микрофона в видео
         localMicStatus.className = `mic-status ${isAudioEnabled ? '' : 'muted'}`;
