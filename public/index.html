@@ -2222,13 +2222,11 @@
 
       // Присоединение к существующей комнате
       async function joinExistingRoom() {
-        // Проверяем, скрыт ли чат (мобильное устройство)
-        const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.matchMedia('(max-width: 768px)').matches;
-        if (!userName && !isMobile) {
+        // Не запрашиваем имя, если чат скрыт
+        if (!userName && isChatVisible !== false) {
           showNameModal();
           return;
         }
-        // На мобильных не запрашиваем имя
         try {
           console.log(`Joining existing room: ${roomId}`);
           await getLocalStream();
@@ -2244,13 +2242,11 @@
 
       // Создание новой комнаты
       async function createNewRoom() {
-        // Проверяем, скрыт ли чат (мобильное устройство)
-        const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.matchMedia('(max-width: 768px)').matches;
-        if (!userName && !isMobile) {
+        // Не запрашиваем имя, если чат скрыт
+        if (!userName && isChatVisible !== false) {
           showNameModal();
           return;
         }
-        // На мобильных не запрашиваем имя
         roomId = generateRoomId();
         isRoomCreator = true;
         
