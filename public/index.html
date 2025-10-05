@@ -1105,8 +1105,7 @@
       const callButton = document.getElementById('callButton');
       const callButtonContainer = document.getElementById('callButtonContainer');
       const copyLinkBtn = document.getElementById('copyLinkBtn');
-      const qualityBtn = document.getElementById('qualityBtn');
-      const qualityLabel = document.getElementById('qualityLabel');
+      // старая qualityBtn/qualityLabel удалены в новом UI
       const screenShareBtn = document.getElementById('screenShareBtn');
       const nameModal = document.getElementById('nameModal');
       const userNameInput = document.getElementById('userNameInput');
@@ -1749,7 +1748,8 @@
           medium: 'SD',
           low: 'LD'
         };
-        qualityLabel.textContent = qualityTexts[currentVideoQuality] || 'SD';
+        const el = document.getElementById('qualityText');
+        if (el) el.textContent = currentVideoQuality === 'high' ? 'HD+' : (qualityTexts[currentVideoQuality] || 'SD');
       }
 
       // Циклическое переключение качества видео
@@ -2244,7 +2244,7 @@
       hangupBtn.onclick = hangup;
       callButton.onclick = createNewRoom;
       copyLinkBtn.onclick = copyRoomLink;
-      qualityBtn.onclick = cycleVideoQuality;
+      // qualityBtn удалён в новом UI
       screenShareBtn.onclick = toggleScreenShare;
       const settingsBtn = document.getElementById('settingsBtn');
       const settingsSubmenu = document.getElementById('settingsSubmenu');
