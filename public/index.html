@@ -2223,7 +2223,7 @@
       // Присоединение к существующей комнате
       async function joinExistingRoom() {
         // Не запрашиваем имя, если чат скрыт
-        if (!userName && isChatVisible !== false) {
+        if (!userName && isChatVisible) {
           showNameModal();
           return;
         }
@@ -2243,7 +2243,7 @@
       // Создание новой комнаты
       async function createNewRoom() {
         // Не запрашиваем имя, если чат скрыт
-        if (!userName && isChatVisible !== false) {
+        if (!userName && isChatVisible) {
           showNameModal();
           return;
         }
@@ -2304,6 +2304,17 @@
       window.addEventListener('load', () => {
         checkUrlParams();
         // Применим начальную раскладку (один участник)
+        // Скрываем чат и шапку на мобильных устройствах
+        const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.matchMedia('(max-width: 768px)').matches;
+            if (isMobile) {
+        isChatVisible = false;
+        const chatSection = document.getElementById('chatSection');
+            if (chatSection) chatSection.style.display = 'none';
+        const participantsSection = document.getElementById('participantsSection');
+            if (participantsSection) participantsSection.style.display = 'none';
+        const headerEl = document.querySelector('header');
+            if (headerEl) headerEl.style.display = 'none';
+        }
         updateVideoGridLayout();
       });
     </script>
