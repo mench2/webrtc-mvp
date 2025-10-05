@@ -2036,6 +2036,8 @@
           localStream.getTracks().forEach(track => track.stop());
           localStream = null;
         }
+        // Сбрасываем источник видео, чтобы не было чёрного поля
+        if (localVideo) localVideo.srcObject = null;
         
         // Останавливаем демонстрацию экрана
         if (screenStream) {
