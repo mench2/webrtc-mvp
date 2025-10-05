@@ -625,17 +625,17 @@
       }
       
       .call-controls {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        transform: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-        background: transparent;
-        padding: 16px calc(16px + env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  transform: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: transparent;
+  padding: 16px calc(16px + env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
       }
 
       .control-group {
@@ -650,33 +650,39 @@
       }
 
       .control-btn.round {
-        width: 60px;
-        height: 60px;
-        border-radius: 28px;
-        background: #e6d8ef;
-        color: #5b3f8c;
+  width: 60px;
+  height: 60px;
+  border-radius: 28px;
+  background: #e6d8ef;
+  color: #5b3f8c;
       }
       .control-btn.round.primary {
-        background: #e6d8ef;
+  background: #e6d8ef;
       }
       .control-btn.round svg { width: 28px; height: 28px; }
 
       .control-btn.text-pill {
-        min-width: 150px;
-        height: 56px;
-        border-radius: 28px;
-        background: #e6d8ef;
-        color: #5b3f8c;
-        padding: 0 20px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-weight: 700;
+  min-width: 150px;
+  height: 56px;
+  border-radius: 28px;
+  background: #e6d8ef;
+  color: #5b3f8c;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
       }
       .control-btn.text-pill .icon { font-size: 18px; }
 
       .hangup-wrap { margin-left: 12px; }
-      .hangup-wrap .control-btn.leave { width: 64px; height: 64px; border-radius: 22px; background: rgb(240, 29, 54); color: #7b2b39; }
+      .hangup-wrap .control-btn.leave {
+        width: 64px;
+        height: 64px;
+        border-radius: 22px;
+        background: rgb(240, 29, 54);
+        color: #7b2b39;
+      }
 
       /* Submenu above settings */
       .settings-fab-wrap { position: relative; display: flex; align-items: center; }
@@ -697,7 +703,17 @@
         transform: translateY(0) scale(1); 
         pointer-events: auto; 
       }
-      .settings-pill { display: flex; align-items: center; gap: 12px; background: #9233ce; color: #ffffff; border-radius: 28px; padding: 14px 20px; font-weight: 700; border: 1px solid rgba(0,0,0,0.05); }
+      .settings-pill {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: #9233ce;
+        color: #ffffff;
+        border-radius: 28px;
+        padding: 14px 20px;
+        font-weight: 700;
+        border: 1px solid rgba(0,0,0,0.05);
+      }
       .settings-pill .icon { font-size: 22px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; width: 24px; }
       
       .room-input {
