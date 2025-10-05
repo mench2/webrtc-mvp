@@ -1106,7 +1106,7 @@
       const callButtonContainer = document.getElementById('callButtonContainer');
       const copyLinkBtn = document.getElementById('copyLinkBtn');
       // старая qualityBtn/qualityLabel удалены в новом UI
-      const screenShareBtn = document.getElementById('screenShareBtn');
+      // screenShareBtn удалён в новом UI (используем transBtn)
       const nameModal = document.getElementById('nameModal');
       const userNameInput = document.getElementById('userNameInput');
       const confirmNameBtn = document.getElementById('confirmNameBtn');
@@ -1297,10 +1297,14 @@
           // Обновляем локальное видео
           localVideo.srcObject = screenStream;
           
-          // Обновляем состояние кнопки
+          // Обновляем состояние кнопки (Trans)
           isScreenSharing = true;
-          screenShareBtn.classList.add('active');
-          screenShareBtn.querySelector('.control-label').textContent = 'Stop';
+          const tb = document.getElementById('transBtn');
+          if (tb) {
+            tb.classList.add('active');
+            const textEl = tb.querySelector('span:last-child');
+            if (textEl) textEl.textContent = 'Stop';
+          }
           
           showNotification('Демонстрация экрана начата');
           
@@ -1331,10 +1335,14 @@
             localVideo.srcObject = localStream;
           }
 
-          // Обновляем состояние кнопки
+          // Обновляем состояние кнопки (Trans)
           isScreenSharing = false;
-          screenShareBtn.classList.remove('active');
-          screenShareBtn.querySelector('.control-label').textContent = 'Screen';
+          const tb = document.getElementById('transBtn');
+          if (tb) {
+            tb.classList.remove('active');
+            const textEl = tb.querySelector('span:last-child');
+            if (textEl) textEl.textContent = 'Trans';
+          }
           
           showNotification('Демонстрация экрана остановлена');
           
@@ -2245,7 +2253,7 @@
       callButton.onclick = createNewRoom;
       copyLinkBtn.onclick = copyRoomLink;
       // qualityBtn удалён в новом UI
-      screenShareBtn.onclick = toggleScreenShare;
+      // screenShareBtn удалён, используем transBtn
       const settingsBtn = document.getElementById('settingsBtn');
       const settingsSubmenu = document.getElementById('settingsSubmenu');
       const qualityToggle = document.getElementById('qualityToggle');
