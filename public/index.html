@@ -7,6 +7,15 @@
     <title>Adeita Vichat</title>
     <style>
       * { box-sizing: border-box; }
+      :root {
+        --m3-primary: #6750A4;
+        --m3-primary-variant: #4F378B;
+        --m3-on-primary: #FFFFFF;
+        --m3-error: #B3261E;
+        --m3-surface: #121212;
+        --m3-surface-variant: #1E1E1E;
+        --m3-outline: #2A2A2A;
+      }
       
       body { 
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; 
@@ -22,7 +31,7 @@
         width: 100vw; 
         height: 100vh;
         margin: 0; 
-        background: #1a1a1a;
+        background: #000000;
         display: flex;
         flex-direction: column;
         overflow: hidden;
@@ -33,7 +42,7 @@
         align-items: center; 
         justify-content: center;
         padding: 20px 24px;
-        background: linear-gradient(135deg, #0088cc 0%, #0066aa 100%);
+        background: linear-gradient(135deg, var(--m3-primary) 0%, var(--m3-primary-variant) 100%);
         flex-shrink: 0;
         position: relative;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
@@ -98,13 +107,13 @@
         flex-direction: column;
         padding: 0;
         overflow: hidden;
-        background: #1a1a1a;
+        background: #000000;
         padding-bottom: 96px;
       }
       
       .participants-section {
         width: 320px;
-        background: #1e1e1e;
+        background: #000000;
         border-left: 1px solid #333333;
         display: flex;
         flex-direction: column;
@@ -118,7 +127,7 @@
         display: flex;
         flex-direction: column;
         height: 300px;
-        background: #1a1a1a;
+        background: #000000;
       }
 
       .chat-header {
@@ -172,8 +181,8 @@
 
       .chat-message.own {
         align-self: flex-end;
-        background: #0088cc;
-        color: white;
+        background: var(--m3-primary);
+        color: var(--m3-on-primary);
       }
 
       .chat-message.other {
@@ -263,7 +272,7 @@
         flex-wrap: wrap; 
         margin: 20px 0 24px;
         padding: 20px;
-        background: #1e1e1e;
+        background: #000000;
         border-radius: 12px;
         border: 1px solid #2a2a2a;
       }
@@ -280,8 +289,8 @@
       
       input:focus, select:focus {
         outline: none;
-        border-color: #5865f2;
-        box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.3);
+        border-color: var(--m3-primary);
+        box-shadow: 0 0 0 2px rgba(103, 80, 164, 0.35);
         background: #323232;
       }
       
@@ -308,13 +317,13 @@
       .control-btn .icon { font-size: 20px; line-height: 1; display: block; }
       
       .btn-primary {
-        background: #0088cc;
-        color: white;
-        border: 1px solid #0066aa;
+        background: var(--m3-primary);
+        color: var(--m3-on-primary);
+        border: 1px solid var(--m3-primary-variant);
       }
       
       .btn-primary:hover {
-        background: #0066aa;
+        background: var(--m3-primary-variant);
         transform: translateY(-1px);
       }
       
@@ -330,13 +339,13 @@
       }
       
       .btn-danger {
-        background: #ed4245;
+        background: var(--m3-error);
         color: white;
-        border: 1px solid #c23e41;
+        border: 1px solid #8C1D18;
       }
       
       .btn-danger:hover {
-        background: #c23e41;
+        background: #8C1D18;
         transform: translateY(-1px);
       }
       
@@ -380,7 +389,7 @@
       
       .video-container {
         position: relative;
-        background: #1a1a1a;
+        background: #000000;
         border-radius: 8px;
         overflow: hidden;
         border: 2px solid transparent;
@@ -398,27 +407,14 @@
         border-color: #0088cc;
       }
       
-      .video-label {
-        position: absolute;
-        bottom: 8px;
-        left: 8px;
-        background: rgba(0, 0, 0, 0.7);
-        color: white;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 12px;
-        font-weight: 500;
-        z-index: 10;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
+      /* Полностью скрываем подпись и индикатор на всех видео */
+      .video-label { display: none !important; }
       
       .mic-status {
         width: 16px;
         height: 16px;
         border-radius: 50%;
-        background: #0088cc;
+        background: var(--m3-primary);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -434,7 +430,7 @@
         width: 100%; 
         height: 100%;
         object-fit: cover;
-        background: #1a1a1a;
+        background: #000000;
         border-radius: 8px;
       }
       
@@ -454,7 +450,7 @@
       }
       
       .room-info {
-        background: #1e1e1e;
+        background: #000000;
         padding: 16px 20px;
         border-radius: 8px;
         margin-bottom: 20px;
@@ -584,7 +580,7 @@
         width: 28px;
         height: 28px;
         border-radius: 50%;
-        background: #0088cc;
+        background: var(--m3-primary);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -870,7 +866,7 @@
       }
       
       .control-btn.join:hover {
-        background: #4752c4;
+        background: var(--m3-primary-variant);
       }
       
       .control-btn.settings {
@@ -913,8 +909,8 @@
       }
       
       .call-button {
-        background: #0088cc;
-        color: white;
+        background: var(--m3-primary);
+        color: var(--m3-on-primary);
         border: none;
         border-radius: 50px;
         padding: 16px 32px;
@@ -924,17 +920,22 @@
         display: flex;
         align-items: center;
         gap: 12px;
-        box-shadow: 0 4px 20px rgba(0, 136, 204, 0.4);
+        box-shadow: 0 4px 20px rgba(103, 80, 164, 0.4);
         transition: all 0.2s ease;
       }
       
       .call-button:hover {
-        background: #0066aa;
+        background: var(--m3-primary-variant);
         transform: translateY(-2px);
-        box-shadow: 0 6px 25px rgba(0, 136, 204, 0.5);
+        box-shadow: 0 6px 25px rgba(103, 80, 164, 0.5);
       }
       
       .call-button svg {
+        width: 24px;
+        height: 24px;
+      }
+      .call-button img {
+        display: block;
         width: 24px;
         height: 24px;
       }
@@ -947,7 +948,7 @@
         width: 100%;
         height: 100%;
         background: rgba(0, 0, 0, 0.8);
-        display: flex;
+        display: none; /* скрыто по умолчанию */
         align-items: center;
         justify-content: center;
         z-index: 2000;
@@ -1114,10 +1115,8 @@
       <!-- Кнопка звонка (показывается до подключения) -->
       <div class="call-button-container" id="callButtonContainer">
         <button class="call-button" id="callButton">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-          </svg>
-          <span>Начать звонок</span>
+          <img src="/icon/connect_without_contact_24dp_FFFFFF_FILL0_wght400_GRAD0_opsz24.svg" alt="Connected" width="24" height="24" />
+          <span>Start a call</span>
         </button>
       </div>
 
@@ -1180,6 +1179,9 @@
       const chatToggle = document.getElementById('chatToggle');
       const chatSection = document.getElementById('chatSection');
 
+      // Единая детекция мобильных устройств (используем везде)
+      const IS_MOBILE = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.matchMedia('(max-width: 768px)').matches;
+
       const params = new URLSearchParams(window.location.search);
       const SIGNAL_URL = params.get('signal') || window.location.origin;
       const socket = io(SIGNAL_URL, {
@@ -1202,6 +1204,7 @@
       let isChatVisible = true; // Видимость чата
       let screenStream = null; // Поток демонстрации экрана
       let isScreenSharing = false; // Флаг демонстрации экрана
+      let pendingChatText = null; // Текст, который хотели отправить до ввода имени
 
       // Генерация уникального ID комнаты
       function generateRoomId() {
@@ -1217,6 +1220,8 @@
 
       // Показать модальное окно для ввода имени
       function showNameModal() {
+        // На мобильных имя не спрашиваем вообще
+        if (IS_MOBILE) return;
         nameModal.style.display = 'flex';
         userNameInput.value = '';
         userNameInput.focus();
@@ -1250,9 +1255,16 @@
         updateParticipantsList();
         showNotification(`Добро пожаловать, ${userName}!`);
 
-        // Если пришли по ссылке с комнатой — сразу присоединяемся (без автосоздания/автозвонка)
-        if (roomId && isRoomCreator === false) {
-          joinExistingRoom();
+        // Если был набран текст до ввода имени — отправим его
+        if (pendingChatText && pendingChatText.trim()) {
+          socket.emit('chat-message', {
+            author: userName,
+            text: pendingChatText,
+            timestamp: new Date()
+          });
+          addChatMessage(userName, pendingChatText, true);
+          pendingChatText = null;
+          if (chatInput) chatInput.value = '';
         }
       }
 
@@ -1316,7 +1328,13 @@
 
       function sendChatMessage() {
         const text = chatInput.value.trim();
-        if (!text || !userName) return;
+        if (!text) return;
+        // Если имя ещё не задано (десктоп): показываем модалку и буферизуем
+        if (!userName && !IS_MOBILE) {
+          pendingChatText = text;
+          showNameModal();
+          return;
+        }
         
         // Отправляем сообщение на сервер
         socket.emit('chat-message', {
@@ -1449,7 +1467,7 @@
           position: fixed;
           top: 20px;
           right: 20px;
-          background: #0088cc;
+          background: var(--m3-primary);
           color: white;
           padding: 12px 20px;
           border-radius: 8px;
@@ -1587,21 +1605,12 @@
         const videoContainer = document.createElement('div');
         videoContainer.className = 'video-container remote-video';
         videoContainer.id = `video-${peerId}`;
-        
-        const label = document.createElement('div');
-        label.className = 'video-label';
-        const displayName = userNames.get(peerId) || `Peer ${peerId.substring(0, 8)}`;
-        label.innerHTML = `
-          <span>${displayName}</span>
-          <div class="mic-status"></div>
-        `;
-        
+
         const video = document.createElement('video');
         video.autoplay = true;
         video.playsInline = true;
         video.id = `remoteVideo-${peerId}`;
-        
-        videoContainer.appendChild(label);
+
         videoContainer.appendChild(video);
         
         return videoContainer;
@@ -2246,8 +2255,7 @@
         const roomParam = urlParams.get('room');
         
         // Если мобильное устройство — скрываем чат программно
-        const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.matchMedia('(max-width: 768px)').matches;
-        if (isMobile) {
+        if (IS_MOBILE) {
           isChatVisible = false;
           chatSection.style.display = 'none';
           participantsSection.style.display = 'none';
@@ -2268,11 +2276,7 @@
 
       // Присоединение к существующей комнате
       async function joinExistingRoom() {
-        // Не запрашиваем имя, если чат скрыт
-        if (!userName && isChatVisible) {
-          showNameModal();
-          return;
-        }
+        // Имя спрашиваем теперь только при попытке отправить чат — не блокируем вход
         try {
           console.log(`Joining existing room: ${roomId}`);
           await getLocalStream();
@@ -2288,11 +2292,7 @@
 
       // Создание новой комнаты
       async function createNewRoom() {
-        // Не запрашиваем имя, если чат скрыт
-        if (!userName && isChatVisible) {
-          showNameModal();
-          return;
-        }
+        // Имя спрашиваем только при первой отправке сообщения
         roomId = generateRoomId();
         isRoomCreator = true;
         
@@ -2374,15 +2374,14 @@
         checkUrlParams();
         // Применим начальную раскладку (один участник)
         // Скрываем чат и шапку на мобильных устройствах
-        const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.matchMedia('(max-width: 768px)').matches;
-            if (isMobile) {
+        if (IS_MOBILE) {
         isChatVisible = false;
         const chatSection = document.getElementById('chatSection');
-            if (chatSection) chatSection.style.display = 'none';
+          if (chatSection) chatSection.style.display = 'none';
         const participantsSection = document.getElementById('participantsSection');
-            if (participantsSection) participantsSection.style.display = 'none';
+          if (participantsSection) participantsSection.style.display = 'none';
         const headerEl = document.querySelector('header');
-            if (headerEl) headerEl.style.display = 'none';
+          if (headerEl) headerEl.style.display = 'none';
         }
         updateVideoGridLayout();
       });
