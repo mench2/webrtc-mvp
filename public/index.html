@@ -1195,6 +1195,16 @@
       });
 
       let roomId = '';
+      // Если мини-апп открыт через Telegram и есть start_param — используем его как roomId
+      if (window.Telegram && window.Telegram.WebApp && Telegram.WebApp.initDataUnsafe && Telegram.WebApp.initDataUnsafe.start_param) {
+        roomId = Telegram.WebApp.initDataUnsafe.start_param;
+        // Автоматически подключаемся к комнате
+        isRoomCreator = false;
+        window.addEventListener('load', () => {
+          // Если уже есть roomId, сразу подключаемся
+          joinExistingRoom();
+        });
+      }
       let peers = new Map(); // peerId -> { pc, remoteStream, userName }
       let localStream = null;
       let isRoomCreator = false; // Флаг, что мы создали комнату
@@ -1444,11 +1454,10 @@
       // Копирование ссылки в буфер обмена
       async function copyRoomLink() {
         const roomUrl = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
-        // Если в Telegram Mini App и на мобильном устройстве — отправляем ссылку для открытия мини-аппа
+        // Если в Telegram Mini App и на мобильном устройстве — отправляем только ссылку для открытия мини-аппа
         if (window.Telegram && window.Telegram.WebApp && IS_MOBILE) {
           const tgAppLink = `https://t.me/AdeitaBot/start?startapp=${roomId}`;
-          const shareText = `Открой мини-апп для звонка: ${tgAppLink}`;
-          window.Telegram.WebApp.sendData(shareText);
+          window.Telegram.WebApp.sendData(tgAppLink);
           window.Telegram.WebApp.close();
         } else if (window.Telegram && window.Telegram.WebApp) {
           // В десктопе Telegram просто отправляем обычную ссылку
