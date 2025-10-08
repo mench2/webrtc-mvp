@@ -1444,19 +1444,30 @@
       // Копирование ссылки в буфер обмена
       async function copyRoomLink() {
         const roomUrl = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
-        try {
-          await navigator.clipboard.writeText(roomUrl);
-          // Показываем уведомление о копировании
-          showNotification('Ссылка скопирована в буфер обмена!');
-        } catch (err) {
-          // Fallback для старых браузеров
-          const textArea = document.createElement('textarea');
-          textArea.value = roomUrl;
-          document.body.appendChild(textArea);
-          textArea.select();
-          document.execCommand('copy');
-          document.body.removeChild(textArea);
-          showNotification('Ссылка скопирована в буфер обмена!');
+        // Если в Telegram Mini App и на мобильном устройстве — отправляем ссылку для открытия мини-аппа
+        if (window.Telegram && window.Telegram.WebApp && IS_MOBILE) {
+          const tgAppLink = `https://t.me/AdeitaBot/start?startapp=${roomId}`;
+          const shareText = `Открой мини-апп для звонка: ${tgAppLink}`;
+          window.Telegram.WebApp.sendData(shareText);
+          window.Telegram.WebApp.close();
+        } else if (window.Telegram && window.Telegram.WebApp) {
+          // В десктопе Telegram просто отправляем обычную ссылку
+          const shareText = `Присоединяйся к звонку: ${roomUrl}`;
+          window.Telegram.WebApp.sendData(shareText);
+          window.Telegram.WebApp.close();
+        } else {
+          try {
+            await navigator.clipboard.writeText(roomUrl);
+            showNotification('Ссылка скопирована в буфер обмена!');
+          } catch (err) {
+            const textArea = document.createElement('textarea');
+            textArea.value = roomUrl;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            showNotification('Ссылка скопирована в буфер обмена!');
+          }
         }
       }
 
