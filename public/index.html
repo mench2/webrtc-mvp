@@ -1459,7 +1459,7 @@
       async function copyRoomLink() {
         const roomUrl = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
         const tgAppLink = `https://t.me/AdeitaBot/Adeita_Vichat?startapp=${roomId}`;
-        const shareText = `Вы можете присоединиться к звонку любым способом:\n\n— Через сайт: ${roomUrl}\n— Через Telegram Mini App: ${tgAppLink}\n\nRoom ID: ${roomId}\n\nЕсли мини-апп не открылся по ссылке, откройте его через меню бота в Telegram и введите Room ID вручную.`;
+        const shareText = `Привет! Приглашаю присоединиться к звонку\nТы можешь это сделать либо:\n\n— Через Telegram Mini App: ${tgAppLink}\n\n— Через сайт: ${roomUrl}\n\n😿Если Telegram Mini App не открывается ты можешь присоединиться через сайт`;
         if (window.Telegram && window.Telegram.WebApp) {
           window.Telegram.WebApp.sendData(shareText);
           window.Telegram.WebApp.close();
