@@ -444,6 +444,9 @@
       .video-container:hover video {
         transform: scale(1.01);
       }
+      /* Отзеркаливание локальной камеры + сохранение эффекта hover */
+      .local-video video { transform: scaleX(-1); }
+      .video-container.local-video:hover video { transform: scaleX(-1) scale(1.01); }
       
       .errors {
         background: #2d1b1b;
@@ -1545,6 +1548,21 @@
           }
           lastTouchEnd = now;
         }, { passive: false });
+        // Блок многопальцевого пинча
+        document.addEventListener('touchstart', (e) => {
+          if (e.touches && e.touches.length > 1) {
+            e.preventDefault();
+          }
+        }, { passive: false });
+        document.addEventListener('touchmove', (e) => {
+          if (e.touches && e.touches.length > 1) {
+            e.preventDefault();
+          }
+        }, { passive: false });
+        // Блок увеличения колесом с модификатором
+        document.addEventListener('wheel', (e) => {
+          if (e.ctrlKey) e.preventDefault();
+        }, { passive: false });
         document.addEventListener('gesturestart', (e) => e.preventDefault());
         document.addEventListener('gesturechange', (e) => e.preventDefault());
         document.addEventListener('gestureend', (e) => e.preventDefault());
@@ -1752,7 +1770,21 @@
               localStream = await navigator.mediaDevices.getUserMedia(primaryConstraints);
             } catch (e1) {
               console.warn('Primary gUM failed (TG Android), fallback to soft constraints:', e1);
-              localStream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
+              try {
+                // 2a) Иногда помогает запросить сначала только видео (без аудио)
+                const videoOnly = frontId ? { video: { deviceId: { exact: frontId } } } : { video: { facingMode: { ideal: 'user' } } };
+                const v = await navigator.mediaDevices.getUserMedia(videoOnly);
+                // Затем дожимаем аудио отдельно
+                let a = null;
+                try { a = await navigator.mediaDevices.getUserMedia({ audio: true }); } catch (ea) { console.warn('Audio only gUM failed:', ea); }
+                if (a) {
+                  a.getAudioTracks().forEach(t => v.addTrack(t));
+                }
+                localStream = v;
+              } catch (e2) {
+                console.warn('Video-only failed, fallback to minimal soft constraints:', e2);
+                localStream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
+              }
             }
           } else {
             // Обычный путь для сайта/браузера
