@@ -26,6 +26,13 @@
         color: #ffffff;
         overflow: hidden;
       }
+
+      /* Ограничения для Telegram WebApp — включаем через класс на <html> */
+      .tg-webapp { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
+      .tg-webapp * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-user-drag: none; }
+      .tg-webapp a, .tg-webapp img { -webkit-user-drag: none; }
+      /* Разрешаем выделение текста в инпутах и текстовых областях */
+      .tg-webapp input, .tg-webapp textarea { -webkit-user-select: text; user-select: text; }
       
       .wrap { 
         width: 100vw; 
@@ -1181,6 +1188,7 @@
 
       // Единая детекция мобильных устройств (используем везде)
       const IS_MOBILE = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.matchMedia('(max-width: 768px)').matches;
+      const IS_ANDROID = /Android/i.test(navigator.userAgent);
 
       const params = new URLSearchParams(window.location.search);
       const SIGNAL_URL = params.get('signal') || window.location.origin;
@@ -1525,6 +1533,31 @@
         participantsCount.textContent = `${1 + peers.size} participant${1 + peers.size !== 1 ? 's' : ''}`;
       }
 
+      // Включаем ограничения поведения только в Telegram WebApp, чтобы не ломать обычный браузер
+      if (window.Telegram && window.Telegram.WebApp) {
+        document.documentElement.classList.add('tg-webapp');
+        // Блокируем жесты масштабирования (двойной тап / жесты)
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', (e) => {
+          const now = Date.now();
+          if (now - lastTouchEnd <= 300) {
+            e.preventDefault();
+          }
+          lastTouchEnd = now;
+        }, { passive: false });
+        document.addEventListener('gesturestart', (e) => e.preventDefault());
+        document.addEventListener('gesturechange', (e) => e.preventDefault());
+        document.addEventListener('gestureend', (e) => e.preventDefault());
+        // Блокируем long-press контекстное меню/линк-попап
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
+        document.addEventListener('selectstart', (e) => {
+          const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+          if (tag !== 'input' && tag !== 'textarea') e.preventDefault();
+        });
+        // Пресекаем drag на элементах (картинки/линки)
+        document.addEventListener('dragstart', (e) => e.preventDefault());
+      }
+
       function showControls(show) {
         participantsSection.style.display = show ? 'flex' : 'none';
         callControls.style.display = show ? 'flex' : 'none';
@@ -1672,24 +1705,71 @@
 
       let currentVideoQuality = 'medium';
 
+      // Поиск deviceId по типу и предполагаемой стороне (front/back)
+      async function getVideoDeviceIdByFacing(preferFacing /* 'user' | 'environment' */) {
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const videos = devices.filter(d => d.kind === 'videoinput');
+          if (videos.length === 0) return null;
+          const preferNeedle = preferFacing === 'environment' ? ['back', 'rear', 'environment'] : ['front', 'user'];
+          const altNeedle = preferFacing === 'environment' ? ['front', 'user'] : ['back', 'rear', 'environment'];
+          const byNeedle = (arr) => videos.find(v => (v.label || '').toLowerCase().includes(arr[0]) || (v.label || '').toLowerCase().includes(arr[1]) || (v.label || '').toLowerCase().includes(arr[2] || ''));
+          const preferred = byNeedle(preferNeedle);
+          if (preferred) return preferred.deviceId;
+          const alt = byNeedle(altNeedle);
+          if (alt) return alt.deviceId;
+          return videos[0].deviceId;
+        } catch (e) {
+          console.warn('enumerateDevices failed:', e);
+          return null;
+        }
+      }
+
       async function getLocalStream(quality = 'medium') {
         try {
           const videoConstraints = videoQualitySettings[quality] || videoQualitySettings.medium;
-          
-          localStream = await navigator.mediaDevices.getUserMedia({
-            audio: {
-              echoCancellation: true,
-              noiseSuppression: true,
-              autoGainControl: true,
-              sampleRate: 48000
-            },
-            video: {
-              width: videoConstraints.width,
-              height: videoConstraints.height,
-              frameRate: videoConstraints.frameRate,
-              facingMode: 'user'
+
+          const isTgAndroid = /Android/i.test(navigator.userAgent) && !!(window.Telegram && window.Telegram.WebApp);
+
+          if (isTgAndroid) {
+            // 1) Мягкий запрос для разрешений (часто обязателен в TG webview)
+            try {
+              const soft = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+              // Закрываем треки, это только для открытия доступа и получения labels
+              soft.getTracks().forEach(t => t.stop());
+            } catch (e) {
+              console.warn('Soft permission gUM failed (TG Android):', e);
             }
-          });
+
+            // 2) Пробуем выбрать front по deviceId
+            const frontId = await getVideoDeviceIdByFacing('user');
+            const primaryConstraints = {
+              audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+              video: frontId ? { deviceId: { exact: frontId }, width: { ideal: videoConstraints.width }, height: { ideal: videoConstraints.height }, frameRate: { ideal: videoConstraints.frameRate } } : { facingMode: { ideal: 'user' } }
+            };
+            const fallbackConstraints = { audio: true, video: { facingMode: { ideal: 'user' } } };
+            try {
+              localStream = await navigator.mediaDevices.getUserMedia(primaryConstraints);
+            } catch (e1) {
+              console.warn('Primary gUM failed (TG Android), fallback to soft constraints:', e1);
+              localStream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
+            }
+          } else {
+            // Обычный путь для сайта/браузера
+            localStream = await navigator.mediaDevices.getUserMedia({
+              audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true
+              },
+              video: {
+                width: videoConstraints.width,
+                height: videoConstraints.height,
+                frameRate: videoConstraints.frameRate,
+                facingMode: { ideal: 'user' }
+              }
+            });
+          }
           
           localVideo.srcObject = localStream;
           currentVideoQuality = quality;
@@ -1817,10 +1897,14 @@
           const currentFacing = localStream && localStream.getVideoTracks()[0]?.getSettings().facingMode;
           const nextFacing = currentFacing === 'environment' ? 'user' : 'environment';
           const constraints = videoQualitySettings[currentVideoQuality] || videoQualitySettings.medium;
-          const newStream = await navigator.mediaDevices.getUserMedia({
-            audio: true,
-            video: { width: constraints.width, height: constraints.height, frameRate: constraints.frameRate, facingMode: { ideal: nextFacing } }
-          });
+
+          // Пытаемся выбрать точный deviceId соответствующей камеры
+          const deviceId = await getVideoDeviceIdByFacing(nextFacing);
+          const video = deviceId
+            ? { deviceId: { exact: deviceId }, width: { ideal: constraints.width }, height: { ideal: constraints.height }, frameRate: { ideal: constraints.frameRate } }
+            : { facingMode: { ideal: nextFacing }, width: { ideal: constraints.width }, height: { ideal: constraints.height }, frameRate: { ideal: constraints.frameRate } };
+
+          const newStream = await navigator.mediaDevices.getUserMedia({ audio: true, video });
           const newVideoTrack = newStream.getVideoTracks()[0];
           const newAudioTrack = newStream.getAudioTracks()[0];
           // Replace in PC senders
