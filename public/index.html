@@ -2272,6 +2272,8 @@
       function checkUrlParams() {
         const urlParams = new URLSearchParams(window.location.search);
         const roomParam = urlParams.get('room');
+        // Телеграм добавляет стартовый параметр как tgWebAppStartParam в URL при deep-link запуске
+        const tgStartParam = urlParams.get('tgWebAppStartParam') || urlParams.get('startapp');
         
         // Если мобильное устройство — скрываем чат программно
         if (IS_MOBILE) {
@@ -2280,7 +2282,17 @@
           participantsSection.style.display = 'none';
         }
 
-        if (roomParam) {
+        // Приоритет: старт из Telegram Mini App
+        if (tgStartParam) {
+          roomId = tgStartParam;
+          isRoomCreator = false;
+          // Кнопка действует как Join
+          callButton.onclick = joinExistingRoom;
+          // Если открыто внутри Telegram — присоединимся автоматически
+          if (window.Telegram && window.Telegram.WebApp) {
+            joinExistingRoom();
+          }
+        } else if (roomParam) {
           // Если есть параметр room в URL, присоединяемся к существующей комнате
           roomId = roomParam;
           isRoomCreator = false;
