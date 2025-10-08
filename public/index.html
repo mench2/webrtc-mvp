@@ -1199,6 +1199,28 @@
       // Единая детекция мобильных устройств (используем везде)
       const IS_MOBILE = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.matchMedia('(max-width: 768px)').matches;
       const IS_ANDROID = /Android/i.test(navigator.userAgent);
+      function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+      async function tryGetUserMediaWithVariants(variants, attemptsPerVariant = 2, delayMs = 250) {
+        let lastErr = null;
+        for (const constraints of variants) {
+          for (let i = 0; i < attemptsPerVariant; i++) {
+            try {
+              return await navigator.mediaDevices.getUserMedia(constraints);
+            } catch (e) {
+              lastErr = e;
+              // При NotAllowed — бессмысленно ретраить немедленно
+              if ((e && e.name === 'NotAllowedError') || (e && e.name === 'SecurityError')) {
+                throw e;
+              }
+              // При Overconstrained/NotFound — пробуем следующий вариант без задержки
+              if (e && (e.name === 'OverconstrainedError' || e.name === 'NotFoundError')) break;
+              await sleep(delayMs);
+            }
+          }
+        }
+        throw lastErr || new Error('getUserMedia failed');
+      }
 
       const params = new URLSearchParams(window.location.search);
       const SIGNAL_URL = params.get('signal') || window.location.origin;
@@ -1773,24 +1795,29 @@
               video: frontId ? { deviceId: { exact: frontId }, width: { ideal: videoConstraints.width }, height: { ideal: videoConstraints.height }, frameRate: { ideal: videoConstraints.frameRate } } : { facingMode: { ideal: 'user' } }
             };
             const fallbackConstraints = { audio: true, video: true };
+            // Набор вариантов для устойчивых попыток
+            const variants = [
+              primaryConstraints,
+              // только видео (точное устройство или facingMode), потом аудио отдельно добавим ниже
+              (frontId ? { video: { deviceId: { exact: frontId } } } : { video: { facingMode: { ideal: 'user' } } }),
+              fallbackConstraints,
+              // Самый мягкий вариант вообще без ограничений
+              { video: true, audio: true }
+            ];
             try {
-              localStream = await navigator.mediaDevices.getUserMedia(primaryConstraints);
+              const s = await tryGetUserMediaWithVariants([variants[0]], 2, 200);
+              localStream = s;
             } catch (e1) {
-              console.warn('Primary gUM failed (TG Android), fallback to soft constraints:', e1);
+              console.warn('Primary variants failed, trying video-only/fallback variants:', e1);
               try {
-                // 2a) Иногда помогает запросить сначала только видео (без аудио)
-                const videoOnly = frontId ? { video: { deviceId: { exact: frontId } } } : { video: { facingMode: { ideal: 'user' } } };
-                const v = await navigator.mediaDevices.getUserMedia(videoOnly);
-                // Затем дожимаем аудио отдельно
+                const v = await tryGetUserMediaWithVariants([variants[1]], 2, 200);
                 let a = null;
-                try { a = await navigator.mediaDevices.getUserMedia({ audio: true }); } catch (ea) { console.warn('Audio only gUM failed:', ea); }
-                if (a) {
-                  a.getAudioTracks().forEach(t => v.addTrack(t));
-                }
+                try { a = await tryGetUserMediaWithVariants([{ audio: true }], 1, 0); } catch (ea) { console.warn('Audio only gUM failed:', ea); }
+                if (a) a.getAudioTracks().forEach(t => v.addTrack(t));
                 localStream = v;
               } catch (e2) {
-                console.warn('Video-only failed, fallback to minimal soft constraints:', e2);
-                localStream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
+                console.warn('Video-only also failed, trying broad fallback:', e2);
+                localStream = await tryGetUserMediaWithVariants([variants[2], variants[3]], 1, 200);
               }
             }
           } else {
@@ -2561,6 +2588,20 @@
           if (headerEl) headerEl.style.display = 'none';
         }
         updateVideoGridLayout();
+        // В TG на Android делаем автоповтор запроса камеры при возврате во вкладку
+        const isTgAndroid = /Android/i.test(navigator.userAgent) && !!(window.Telegram && window.Telegram.WebApp);
+        if (isTgAndroid) {
+          document.addEventListener('visibilitychange', async () => {
+            if (!document.hidden && !localStream) {
+              try { await getLocalStream(); } catch (e) { console.warn('Auto-retry gUM on visibilitychange failed:', e); }
+            }
+          });
+          window.addEventListener('focus', async () => {
+            if (!localStream) {
+              try { await getLocalStream(); } catch (e) { console.warn('Auto-retry gUM on focus failed:', e); }
+            }
+          });
+        }
       });
     </script>
   </body>
