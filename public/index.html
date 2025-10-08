@@ -1195,15 +1195,19 @@
       });
 
       let roomId = '';
-      // Если мини-апп открыт через Telegram и есть start_param — используем его как roomId
-      if (window.Telegram && window.Telegram.WebApp && Telegram.WebApp.initDataUnsafe && Telegram.WebApp.initDataUnsafe.start_param) {
-        roomId = Telegram.WebApp.initDataUnsafe.start_param;
-        // Автоматически подключаемся к комнате
-        isRoomCreator = false;
-        window.addEventListener('load', () => {
-          // Если уже есть roomId, сразу подключаемся
+      // Если мини-апп открыт через Telegram (через short_name или обычную ссылку) и есть start_param — используем его как roomId
+      function tryAutoJoinTelegramRoom() {
+        if (window.Telegram && window.Telegram.WebApp && Telegram.WebApp.initDataUnsafe && Telegram.WebApp.initDataUnsafe.start_param) {
+          roomId = Telegram.WebApp.initDataUnsafe.start_param;
+          isRoomCreator = false;
           joinExistingRoom();
-        });
+        }
+      }
+      // Для надёжности вызываем и при загрузке, и после инициализации Telegram WebApp
+      if (window.Telegram && window.Telegram.WebApp) {
+        window.addEventListener('load', tryAutoJoinTelegramRoom);
+        // Иногда Telegram WebApp.initDataUnsafe появляется чуть позже
+        setTimeout(tryAutoJoinTelegramRoom, 500);
       }
       let peers = new Map(); // peerId -> { pc, remoteStream, userName }
       let localStream = null;
