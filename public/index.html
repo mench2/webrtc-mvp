@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='8' fill='%2311aaff'/%3E%3C/svg%3E">
     <title>Adeita Vichat</title>
     <style>
@@ -831,6 +831,13 @@
         transition: all 0.2s ease;
         position: relative;
       }
+      /* Убираем светлые фокусы/outline и подсветку на мобильных */
+      .control-btn, .settings-pill, .call-button, .chat-send-btn, .chat-toggle, .control-btn:focus, .settings-pill:focus, .call-button:focus, .chat-send-btn:focus, .chat-toggle:focus {
+        outline: none !important;
+        box-shadow: none !important;
+        -webkit-tap-highlight-color: rgba(0,0,0,0);
+      }
+      button:focus-visible { outline: none; box-shadow: none; }
       .control-btn.primary { width: 56px; height: 56px; }
       .control-label { 
         text-align: center; 
@@ -1765,7 +1772,7 @@
               audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
               video: frontId ? { deviceId: { exact: frontId }, width: { ideal: videoConstraints.width }, height: { ideal: videoConstraints.height }, frameRate: { ideal: videoConstraints.frameRate } } : { facingMode: { ideal: 'user' } }
             };
-            const fallbackConstraints = { audio: true, video: { facingMode: { ideal: 'user' } } };
+            const fallbackConstraints = { audio: true, video: true };
             try {
               localStream = await navigator.mediaDevices.getUserMedia(primaryConstraints);
             } catch (e1) {
@@ -2048,6 +2055,13 @@
           if (remoteVideo && remoteVideo.srcObject !== remoteStream) {
             remoteVideo.srcObject = remoteStream;
           }
+          // Если трек завершился (peer ушёл/свернул), быстро убираем видео
+          if (e.track) {
+            e.track.onended = () => {
+              console.log(`Track ended for ${peerId}, removing peer`);
+              removePeer(peerId);
+            };
+          }
         };
         
         pc.onconnectionstatechange = () => {
@@ -2074,6 +2088,35 @@
             console.error(`ICE connection failed for ${peerId}`);
             // Попробуем перезапустить ICE
             pc.restartIce();
+            // И подстрахуемся удалением, если не восстановится
+            const ref = peers.get(peerId);
+            if (ref && !ref._disconnectTimer) {
+              ref._disconnectTimer = setTimeout(() => {
+                if (peers.has(peerId) && ref.pc.iceConnectionState !== 'connected') {
+                  console.warn(`Removing peer ${peerId} after ICE failed timeout`);
+                  removePeer(peerId);
+                }
+              }, 3000);
+            }
+          }
+          if (pc.iceConnectionState === 'disconnected') {
+            // Даём немного времени на восстановление, затем убираем
+            const ref = peers.get(peerId);
+            if (ref && !ref._disconnectTimer) {
+              ref._disconnectTimer = setTimeout(() => {
+                if (peers.has(peerId) && ref.pc.iceConnectionState !== 'connected') {
+                  console.warn(`Removing peer ${peerId} after disconnected timeout`);
+                  removePeer(peerId);
+                }
+              }, 3000);
+            }
+          }
+          if (pc.iceConnectionState === 'connected') {
+            const ref = peers.get(peerId);
+            if (ref && ref._disconnectTimer) {
+              clearTimeout(ref._disconnectTimer);
+              ref._disconnectTimer = null;
+            }
           }
         };
         
@@ -2307,20 +2350,7 @@
           addPeer(peerId);
         });
         
-        // Инициируем звонок только если наш socket.id лексикографически меньше
-        // Это гарантирует, что только один клиент инициирует звонок
-        if (peerList.length > 0) {
-          setTimeout(async () => {
-            console.log('Starting peer calls...');
-            for (const peerId of peerList) {
-              console.log(`Checking peer ${peerId}: has=${peers.has(peerId)}, socket.id=${socket.id} < peerId=${peerId} = ${socket.id < peerId}`);
-              if (peers.has(peerId) && socket.id < peerId) {
-                console.log(`Calling peer ${peerId}`);
-                await callPeer(peerId);
-              }
-            }
-          }, 1000);
-        }
+        // Больше не звоним автоматически существующим участникам, ждём инициативы нового участника
       });
       
       socket.on('peer-joined', ({ socketId }) => {
@@ -2328,9 +2358,9 @@
         console.log('Our socket ID:', socket.id);
         addPeer(socketId);
         
-        // Новый пир инициирует звонок только если его ID меньше
+        // Новый пир инициирует звонок — чтобы избежать двойных звонков и фантомного реконнекта
         setTimeout(async () => {
-          console.log(`Checking new peer ${socketId}: has=${peers.has(socketId)}, socket.id=${socket.id} < socketId=${socketId} = ${socket.id < socketId}`);
+          console.log(`Initiator check for new peer ${socketId}: we call if our id < theirs`);
           if (peers.has(socketId) && socket.id < socketId) {
             console.log(`Calling new peer ${socketId}`);
             await callPeer(socketId);
