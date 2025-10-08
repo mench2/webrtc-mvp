@@ -1454,28 +1454,23 @@
       // Копирование ссылки в буфер обмена
       async function copyRoomLink() {
         const roomUrl = `${window.location.origin}${window.location.pathname}?room=${roomId}`;
-        // Если в Telegram Mini App и на мобильном устройстве — отправляем только ссылку для открытия мини-аппа
-        if (window.Telegram && window.Telegram.WebApp && IS_MOBILE) {
-          const tgAppLink = `https://t.me/AdeitaBot/start?startapp=${roomId}`;
-          window.Telegram.WebApp.sendData(tgAppLink);
-          window.Telegram.WebApp.close();
-        } else if (window.Telegram && window.Telegram.WebApp) {
-          // В десктопе Telegram просто отправляем обычную ссылку
-          const shareText = `Присоединяйся к звонку: ${roomUrl}`;
+        const tgAppLink = `https://t.me/AdeitaBot/start?startapp=${roomId}`;
+        const shareText = `Вы можете присоединиться к звонку любым способом:\n\n— Через сайт: ${roomUrl}\n— Через Telegram Mini App: ${tgAppLink}`;
+        if (window.Telegram && window.Telegram.WebApp) {
           window.Telegram.WebApp.sendData(shareText);
           window.Telegram.WebApp.close();
         } else {
           try {
-            await navigator.clipboard.writeText(roomUrl);
-            showNotification('Ссылка скопирована в буфер обмена!');
+            await navigator.clipboard.writeText(shareText);
+            showNotification('Текст с двумя ссылками скопирован!');
           } catch (err) {
             const textArea = document.createElement('textarea');
-            textArea.value = roomUrl;
+            textArea.value = shareText;
             document.body.appendChild(textArea);
             textArea.select();
             document.execCommand('copy');
             document.body.removeChild(textArea);
-            showNotification('Ссылка скопирована в буфер обмена!');
+            showNotification('Текст с двумя ссылками скопирован!');
           }
         }
       }
