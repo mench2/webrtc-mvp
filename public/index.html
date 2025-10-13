@@ -44,16 +44,7 @@
         overflow: hidden;
       }
       
-      header { 
-        display: flex; 
-        align-items: center; 
-        justify-content: center;
-        padding: 20px 24px;
-        background: linear-gradient(135deg, var(--m3-primary) 0%, var(--m3-primary-variant) 100%);
-        flex-shrink: 0;
-        position: relative;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-      }
+      header { display: none !important; }
       
       .logo {
         text-align: center;
@@ -119,31 +110,39 @@
       }
       
       .participants-section {
-        width: 320px;
-        background: #000000;
-        border-left: 1px solid #333333;
+        width: 420px; /* ширина как договаривались */
+        background: rgba(20,20,20,0.9);
         display: flex;
         flex-direction: column;
         overflow: hidden;
-        padding-bottom: 96px;
+        padding: 12px;
+        position: fixed; /* делаем островком */
+        top: 24px;
+        right: 24px;
+        bottom: 24px;
+        border-radius: 16px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+        backdrop-filter: blur(8px);
       }
 
       /* Стили для чата */
       .chat-section {
-        border-top: 1px solid #333333;
+        border-top: none;
         display: flex;
         flex-direction: column;
-        height: 300px;
-        background: #000000;
+        height: auto;
+        flex: 1; /* на всю высоту колонки */
+        background: transparent;
       }
 
       .chat-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 12px 16px;
-        border-bottom: 1px solid #333333;
-        background: #2a2a2a;
+        padding: 10px 14px;
+        border-bottom: 1px solid #2a2a2a;
+        background: rgba(40,40,40,0.9);
+        border-radius: 12px;
       }
 
       .chat-title {
@@ -170,7 +169,7 @@
       .chat-messages {
         flex: 1;
         overflow-y: auto;
-        padding: 8px;
+        padding: 8px 8px 0 8px; /* убрали нижний отступ */
         display: flex;
         flex-direction: column;
         gap: 8px;
@@ -221,9 +220,11 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        padding: 12px;
-        border-top: 1px solid #333333;
-        background: #2a2a2a;
+        padding: 10px;
+        border-top: none;
+        background: rgba(40,40,40,0.9);
+        border-radius: 12px;
+        margin-top: 8px; /* ближе к низу */
       }
 
       .chat-input-container input {
@@ -378,13 +379,24 @@
         transform: translateY(-1px);
       }
       
-      .videos-grid { 
-        display: grid; 
-        gap: 8px;
+      .videos-grid {
+        display: grid;
+        gap: 12px;
         flex: 1;
         padding: 16px;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        align-content: start;
+        height: 100%;
+        /* Точный расчёт с учётом паддингов и гэпов */
+        --pad-x: 32px; /* 16px слева + 16px справа */
+        --pad-y: 32px; /* 16px сверху + 16px снизу */
+        --gap: 12px;   /* промежуток между колонками/рядами */
+        --bottom-ui: calc(120px + env(safe-area-inset-bottom));
+        --avail-w: calc(100vw - var(--pad-x) - var(--gap));
+        --avail-h: calc(100vh - var(--pad-y) - var(--bottom-ui) - var(--gap));
+        --tile-size: min( calc(var(--avail-w) / 2), calc(var(--avail-h) / 2) );
+        grid-template-columns: repeat(2, var(--tile-size));
+        grid-template-rows: repeat(2, var(--tile-size));
+        justify-content: center; /* центрируем по горизонтали */
+        align-content: center;   /* центрируем по вертикали */
       }
       
       /* Новый режим: когда только локальная камера — показывать 2x2 */
@@ -403,7 +415,8 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        min-height: 180px;
+        /* квадратные плитки */
+        aspect-ratio: 1 / 1;
         transition: border-color 0.3s ease;
       }
 
@@ -414,6 +427,25 @@
         border-color: #0088cc;
       }
       
+      /* Плейсхолдер для пустых ячеек */
+      .video-container.placeholder {
+        background: #0f0f0f;
+        border: 2px dashed #2a2a2a;
+      }
+      .video-container.local-video.placeholder { background: #0f0f0f; border: 2px dashed #2a2a2a; }
+      .video-container .avatar {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 42px;
+        color: #8a8a8a;
+        z-index: 2;
+        pointer-events: none;
+        user-select: none;
+      }
       /* Полностью скрываем подпись и индикатор на всех видео */
       .video-label { display: none !important; }
       
@@ -433,10 +465,11 @@
         background: #dc2626;
       }
       
-      video { 
-        width: 100%; 
+      video {
+        width: 100%;
         height: 100%;
-        object-fit: cover;
+        object-fit: cover; /* центрирование внутри квадрата */
+        object-position: center center;
         background: #000000;
         border-radius: 8px;
       }
@@ -490,11 +523,19 @@
           order: 2;
         }
         .video-section { padding: 0; }
-        .videos-grid { 
-          grid-template-columns: 1fr 1fr !important; 
-          gap: 6px;
+        .videos-grid {
+          gap: 8px;
           padding: 12px;
-          grid-template-rows: 1fr 1fr;
+          /* На мобильных уменьшаем отступ под системные панели и нижние контролы */
+          --pad-x: 24px; /* 12 + 12 */
+          --pad-y: 24px; /* 12 + 12 */
+          --gap: 8px;
+          --bottom-ui: calc(140px + env(safe-area-inset-bottom));
+          --avail-w: calc(100vw - var(--pad-x) - var(--gap));
+          --avail-h: calc(100vh - var(--pad-y) - var(--bottom-ui) - var(--gap));
+          --tile-size: min( calc(var(--avail-w) / 2), calc(var(--avail-h) / 2) );
+          grid-template-columns: repeat(2, var(--tile-size)) !important;
+          grid-template-rows: repeat(2, var(--tile-size)) !important;
         }
         .video-container { min-height: 160px; }
         header { padding: 16px 20px; }
@@ -535,25 +576,17 @@
         .participants-count { font-size: 12px; }
       }
       
-      .loading {
-        display: inline-block;
-        width: 16px;
-        height: 16px;
-        border: 2px solid #3a3a3a;
-        border-radius: 50%;
-        border-top-color: #5865f2;
-        animation: spin 1s ease-in-out infinite;
-      }
+      .loading { display: inline-block; width: 16px; height: 16px; border: 2px solid #3a3a3a; border-radius: 50%; border-top-color: #5865f2; animation: spin 1s ease-in-out infinite; }
+      /* Прелоадер на весь экран */
+      .preloader { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: #000; z-index: 3000; flex-direction: column; gap: 16px; }
+      .preloader .logo { font-weight: 800; font-size: 24px; color: #ddd; letter-spacing: 0.5px; }
+      .preloader .spinner { width: 42px; height: 42px; border: 4px solid #2a2a2a; border-top-color: #6750A4; border-radius: 50%; animation: spin 1s linear infinite; }
       
       @keyframes spin {
         to { transform: rotate(360deg); }
       }
       
-      .participants-header {
-        padding: 16px 20px;
-        border-bottom: 1px solid #333333;
-        flex-shrink: 0;
-      }
+      .participants-header { display: none; }
       
       .participants-title {
         font-size: 16px;
@@ -566,11 +599,7 @@
         color: #8a8a8a;
       }
       
-      .participants-list {
-        flex: 1;
-        overflow-y: auto;
-        padding: 8px 12px;
-      }
+      .participants-list { display: none; }
       
       .participant-item {
         display: flex;
@@ -631,17 +660,17 @@
       }
       
       .call-controls {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  transform: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  background: transparent;
-  padding: 16px calc(16px + env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        background: transparent;
+        padding: 0;
       }
 
       .control-group {
@@ -1058,6 +1087,10 @@
     </style>
   </head>
   <body>
+    <div class="preloader" id="preloader" style="display:none">
+      <div class="logo">Adeita Vichat</div>
+      <div class="spinner"></div>
+    </div>
     <div class="wrap">
       <header>
         <div class="logo">
@@ -1082,23 +1115,10 @@
         </div>
 
         <div class="participants-section" id="participantsSection">
-          <div class="participants-header">
-            <div class="participants-title" id="participantsTitle">Участники</div>
-            <div class="participants-count" id="participantsCount">0 участников</div>
-          </div>
-          <div class="participants-list" id="participantsList">
-            <!-- Participants will be added dynamically -->
-          </div>
-          
           <!-- Чат -->
           <div class="chat-section" id="chatSection">
             <div class="chat-header">
               <div class="chat-title">Чат</div>
-              <button class="chat-toggle" id="chatToggle">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
-                </svg>
-              </button>
             </div>
             <div class="chat-messages" id="chatMessages">
               <!-- Сообщения чата -->
@@ -1121,7 +1141,7 @@
       <div class="name-modal" id="nameModal">
         <div class="name-modal-content">
           <h3>Как вас зовут?</h3>
-          <p>Введите ваше имя для участия в звонке</p>
+          <p>Введите ваше имя для участия в чате</p>
           <input type="text" id="userNameInput" placeholder="Ваше имя" maxlength="20" />
           <div class="name-modal-buttons">
             <button class="btn-primary" id="confirmNameBtn">Продолжить</button>
@@ -1193,7 +1213,6 @@
       const chatMessagesEl = document.getElementById('chatMessages');
       const chatInput = document.getElementById('chatInput');
       const chatSendBtn = document.getElementById('chatSendBtn');
-      const chatToggle = document.getElementById('chatToggle');
       const chatSection = document.getElementById('chatSection');
 
       // Единая детекция мобильных устройств (используем везде)
@@ -1285,8 +1304,6 @@
         
         // Обновляем интерфейс
         updateParticipantsList();
-        showNotification(`Добро пожаловать, ${userName}!`);
-
         // Если был набран текст до ввода имени — отправим его
         if (pendingChatText && pendingChatText.trim()) {
           socket.emit('chat-message', {
@@ -1349,14 +1366,7 @@
         chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
       }
 
-      function toggleChat() {
-        isChatVisible = !isChatVisible;
-        chatSection.style.display = isChatVisible ? 'flex' : 'none';
-        
-        if (isChatVisible) {
-          scrollChatToBottom();
-        }
-      }
+      function toggleChat() { /* удалено */ }
 
       function sendChatMessage() {
         const text = chatInput.value.trim();
@@ -1584,9 +1594,13 @@
       }
 
       function showControls(show) {
-        participantsSection.style.display = show ? 'flex' : 'none';
+        // Панель управления и кнопка звонка
         callControls.style.display = show ? 'flex' : 'none';
         callButtonContainer.style.display = show ? 'none' : 'flex';
+        // На десктопе колонку участников не скрываем при выходе
+        if (!IS_MOBILE) {
+          participantsSection.style.display = 'flex';
+        }
         // Перестраиваем сетку при переключении UI
         updateVideoGridLayout();
       }
@@ -1599,20 +1613,25 @@
       }
       
       function updateParticipantsList() {
+        if (!participantsList) return; // список участников удалён — выходим
         const totalParticipants = 1 + peers.size; // local + remote
         participantsCount.textContent = `${totalParticipants} participant${totalParticipants !== 1 ? 's' : ''}`;
         
         participantsList.innerHTML = '';
         
         // Add local participant
-        const localParticipant = createParticipantItem(userName || 'Вы', true, !localStream || localStream.getAudioTracks().every(t => t.enabled));
-        participantsList.appendChild(localParticipant);
+        if (participantsList) {
+          const localParticipant = createParticipantItem(userName || 'Вы', true, !localStream || localStream.getAudioTracks().every(t => t.enabled));
+          participantsList.appendChild(localParticipant);
+        }
         
         // Add remote participants
         for (const [peerId, peer] of peers.entries()) {
           const displayName = userNames.get(peerId) || `Peer ${peerId.substring(0, 8)}`;
-          const participant = createParticipantItem(displayName, false, true);
-          participantsList.appendChild(participant);
+          if (participantsList) {
+            const participant = createParticipantItem(displayName, false, true);
+            participantsList.appendChild(participant);
+          }
         }
       }
       
@@ -1658,8 +1677,9 @@
       }
 
       function showProgress(show) {
-        // Прогресс бар удален, просто логируем
-        console.log('Progress:', show ? 'started' : 'finished');
+        const p = document.getElementById('preloader');
+        if (!p) return;
+        p.style.display = show ? 'flex' : 'none';
       }
 
       function updateProgress(percent, text) {
@@ -1668,14 +1688,40 @@
       }
 
       function updateVideoGridLayout() {
-        const totalVideos = 1 + peers.size; // local + remote
+        // фиксированная раскладка 2x2 + плейсхолдеры до 4 ячеек
         videosGrid.className = 'videos-grid';
-        
-        if (totalVideos === 1) videosGrid.classList.add('one-video');
-        else if (totalVideos === 2) videosGrid.classList.add('two-videos');
-        else if (totalVideos === 3) videosGrid.classList.add('three-videos');
-        else if (totalVideos === 4) videosGrid.classList.add('four-videos');
-        else if (totalVideos >= 5) videosGrid.classList.add('five-plus-videos');
+        // Удаляем ВСЕ ранее добавленные плейсхолдеры и случайный локальный аватар
+        [...videosGrid.querySelectorAll('.video-container.placeholder')].forEach(n => n.remove());
+        const localContainer = videosGrid.querySelector('.video-container.local-video');
+        if (localContainer) {
+          localContainer.classList.remove('placeholder');
+          const localAv = localContainer.querySelector('#localAvatar');
+          if (localAv) localAv.remove();
+        }
+        // Сколько ячеек занято реальным видео
+        const realTiles = videosGrid.querySelectorAll('.video-container').length;
+        const placeholdersToAdd = Math.max(0, 4 - realTiles);
+        for (let i = 0; i < placeholdersToAdd; i++) {
+          const ph = document.createElement('div');
+          ph.className = 'video-container placeholder';
+          videosGrid.appendChild(ph);
+        }
+        // после изменения состава пересчитываем размер тайла
+        recalcTileSize();
+      }
+
+      // Динамический расчёт размера тайла по фактическим размерам контейнера
+      function recalcTileSize() {
+        const style = getComputedStyle(videosGrid);
+        const gap = parseFloat(style.gap || '12');
+        const paddingLeft = parseFloat(style.paddingLeft || '16');
+        const paddingRight = parseFloat(style.paddingRight || '16');
+        const paddingTop = parseFloat(style.paddingTop || '16');
+        const paddingBottom = parseFloat(style.paddingBottom || '16');
+        const availW = videosGrid.clientWidth - paddingLeft - paddingRight - gap;
+        const availH = videosGrid.clientHeight - paddingTop - paddingBottom - gap;
+        const tile = Math.max(80, Math.floor(Math.min(availW / 2, availH / 2)));
+        videosGrid.style.setProperty('--tile-size', tile + 'px');
       }
 
       function createRemoteVideoElement(peerId) {
@@ -1689,6 +1735,11 @@
         video.id = `remoteVideo-${peerId}`;
 
         videoContainer.appendChild(video);
+        // Аватар на случай отсутствия треков
+        const av = document.createElement('div');
+        av.className = 'avatar';
+        av.textContent = (userNames.get(peerId) || '•').charAt(0).toUpperCase();
+        videoContainer.appendChild(av);
         
         return videoContainer;
       }
@@ -1752,55 +1803,12 @@
 
       async function getLocalStream(quality = 'medium') {
         try {
-          const videoConstraints = videoQualitySettings[quality] || videoQualitySettings.medium;
-
-          const isTgAndroid = /Android/i.test(navigator.userAgent) && !!(window.Telegram && window.Telegram.WebApp);
-
-          if (isTgAndroid) {
-            // 1) Мягкий запрос для разрешений (часто обязателен в TG webview)
-            try {
-              const soft = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-              // Закрываем треки, это только для открытия доступа и получения labels
-              soft.getTracks().forEach(t => t.stop());
-            } catch (e) {
-              console.warn('Soft permission gUM failed (TG Android):', e);
-            }
-
-            // 2) Простой запрос без сложных констрейнтов для TG Android
-            try {
-              localStream = await navigator.mediaDevices.getUserMedia({ 
-                audio: true, 
-                video: true 
-              });
-            } catch (e) {
-              console.warn('Simple gUM failed (TG Android), trying video only:', e);
-              try {
-                const videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
-                const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                // Объединяем потоки
-                audioStream.getAudioTracks().forEach(track => videoStream.addTrack(track));
-                localStream = videoStream;
-              } catch (e2) {
-                console.warn('Video/audio separate failed, using video only:', e2);
-                localStream = await navigator.mediaDevices.getUserMedia({ video: true });
-              }
-            }
-          } else {
-            // Обычный путь для сайта/браузера
-            localStream = await navigator.mediaDevices.getUserMedia({
-              audio: {
-                echoCancellation: true,
-                noiseSuppression: true,
-                autoGainControl: true
-              },
-              video: {
-                width: videoConstraints.width,
-                height: videoConstraints.height,
-                frameRate: videoConstraints.frameRate,
-                facingMode: { ideal: 'user' }
-              }
-            });
-          }
+          // Базовые констрейнты без агрессивных проверок
+          const constraints = {
+            audio: true,
+            video: { facingMode: { ideal: 'user' } }
+          };
+          localStream = await navigator.mediaDevices.getUserMedia(constraints);
           
           localVideo.srcObject = localStream;
           currentVideoQuality = quality;
@@ -1809,24 +1817,9 @@
           // Обновляем состояние кнопок после получения стрима
           updateButtonStates();
           
-          // Обновляем лейбл качества
-          updateQualityLabel();
-          
-          // Применяем новые настройки ко всем существующим соединениям
-          updateVideoQualityForAllPeers();
+          // Упрощаем: без динамической смены качества
           
         } catch (e) {
-          // Если высокое качество не работает, пробуем среднее
-          if (quality === 'high') {
-            console.warn('High quality failed, trying medium quality');
-            return getLocalStream('medium');
-          }
-          // Если среднее не работает, пробуем низкое
-          if (quality === 'medium') {
-            console.warn('Medium quality failed, trying low quality');
-            return getLocalStream('low');
-          }
-          
           // Не блокируем соединение: позволим вкладке быть только «приёмником»
           showError(`Нет доступа к камере/микрофону: ${e && e.name ? e.name : e}`);
           console.warn(e);
@@ -1838,89 +1831,13 @@
       }
 
       // Обновление качества видео для всех пиров
-      function updateVideoQualityForAllPeers() {
-        if (!localStream) return;
-        
-        for (const [peerId, peer] of peers.entries()) {
-          const videoTrack = localStream.getVideoTracks()[0];
-          if (videoTrack && peer.pc) {
-            const sender = peer.pc.getSenders().find(s => s.track && s.track.kind === 'video');
-            if (sender) {
-              const constraints = videoQualitySettings[currentVideoQuality];
-              sender.track.applyConstraints({
-                width: constraints.width,
-                height: constraints.height,
-                frameRate: constraints.frameRate
-              }).catch(e => console.warn('Failed to apply video constraints:', e));
-            }
-          }
-        }
-      }
+      function updateVideoQualityForAllPeers() { /* упрощено: без динамики */ }
 
       // Адаптивное изменение качества на основе статистики соединения
-      function adaptVideoQuality(peerId) {
-        const peer = peers.get(peerId);
-        if (!peer || !peer.pc) return;
-        
-        peer.pc.getStats().then(stats => {
-          let packetsLost = 0;
-          let packetsReceived = 0;
-          
-          stats.forEach(report => {
-            if (report.type === 'inbound-rtp' && report.mediaType === 'video') {
-              packetsLost += report.packetsLost || 0;
-              packetsReceived += report.packetsReceived || 0;
-            }
-          });
-          
-          const lossRate = packetsReceived > 0 ? packetsLost / packetsReceived : 0;
-          
-          // Если потеря пакетов больше 5%, снижаем качество
-          if (lossRate > 0.05 && currentVideoQuality !== 'low') {
-            console.log(`High packet loss (${(lossRate * 100).toFixed(1)}%), reducing quality`);
-            changeVideoQuality('low');
-          }
-          // Если потеря пакетов меньше 1% и соединение стабильное, повышаем качество
-          else if (lossRate < 0.01 && currentVideoQuality === 'low') {
-            console.log(`Low packet loss (${(lossRate * 100).toFixed(1)}%), increasing quality`);
-            changeVideoQuality('medium');
-          }
-          else if (lossRate < 0.01 && currentVideoQuality === 'medium') {
-            console.log(`Very low packet loss (${(lossRate * 100).toFixed(1)}%), increasing to high quality`);
-            changeVideoQuality('high');
-          }
-        }).catch(e => console.warn('Failed to get connection stats:', e));
-      }
+      function adaptVideoQuality(peerId) { /* упразднено */ }
 
       // Изменение качества видео
-      async function changeVideoQuality(newQuality) {
-        if (newQuality === currentVideoQuality || !localStream) return;
-        
-        try {
-          const videoTrack = localStream.getVideoTracks()[0];
-          if (videoTrack) {
-            const constraints = videoQualitySettings[newQuality];
-            await videoTrack.applyConstraints({
-              width: constraints.width,
-              height: constraints.height,
-              frameRate: constraints.frameRate
-            });
-            
-            currentVideoQuality = newQuality;
-            console.log(`Video quality changed to: ${newQuality}`);
-            
-            // Обновляем качество для всех пиров
-            updateVideoQualityForAllPeers();
-            
-            // Обновляем лейбл
-            updateQualityLabel();
-            
-            showNotification(`Качество видео: ${newQuality === 'high' ? 'Высокое' : newQuality === 'medium' ? 'Среднее' : 'Низкое'}`);
-          }
-        } catch (e) {
-          console.warn('Failed to change video quality:', e);
-        }
-      }
+      async function changeVideoQuality(newQuality) { /* упразднено */ }
 
       // Переключение камеры (front/back)
       async function swapCamera() {
@@ -1957,42 +1874,13 @@
       }
 
       // Обновление лейбла качества видео
-      function updateQualityLabel() {
-        const qualityTexts = {
-          high: 'HD',
-          medium: 'SD',
-          low: 'LD'
-        };
-        const el = document.getElementById('qualityText');
-        if (el) el.textContent = currentVideoQuality === 'high' ? 'HD+' : (qualityTexts[currentVideoQuality] || 'SD');
-      }
+      function updateQualityLabel() { /* упрощено */ }
 
       // Циклическое переключение качества видео
-      function cycleVideoQuality() {
-        const qualities = ['low', 'medium', 'high'];
-        const currentIndex = qualities.indexOf(currentVideoQuality);
-        const nextIndex = (currentIndex + 1) % qualities.length;
-        changeVideoQuality(qualities[nextIndex]);
-        updateQualityLabel();
-      }
+      function cycleVideoQuality() { /* упразднено */ }
 
       // Запуск мониторинга качества соединения
-      function startQualityMonitoring(peerId) {
-        const peer = peers.get(peerId);
-        if (!peer || !peer.pc) return;
-        
-        // Проверяем качество каждые 10 секунд
-        const qualityInterval = setInterval(() => {
-          if (!peers.has(peerId)) {
-            clearInterval(qualityInterval);
-            return;
-          }
-          adaptVideoQuality(peerId);
-        }, 10000);
-        
-        // Сохраняем интервал для очистки при отключении
-        peer.qualityInterval = qualityInterval;
-      }
+      function startQualityMonitoring(peerId) { /* упразднено */ }
 
       function updateButtonStates() {
         if (!localStream) {
@@ -2001,6 +1889,7 @@
           toggleCamBtn.className = 'control-btn video';
           // label удалён в новом UI
           localMicStatus.className = 'mic-status muted';
+          // плейсхолдер для локального не добавляем — только общие placeholder-тайлы
           return;
         }
         
@@ -2020,6 +1909,7 @@
         
         // Обновляем статус микрофона в видео
         localMicStatus.className = `mic-status ${isAudioEnabled ? '' : 'muted'}`;
+        // если стрим есть — никаких локальных плейсхолдеров
       }
 
       function createPeerConnection(peerId) {
@@ -2047,6 +1937,11 @@
           if (remoteVideo && remoteVideo.srcObject !== remoteStream) {
             remoteVideo.srcObject = remoteStream;
           }
+          // если есть видео-трек — убираем аватар
+          if (e.track && e.track.kind === 'video') {
+            const av = document.querySelector(`#video-${peerId} .avatar`);
+            if (av) av.remove();
+          }
           // Если трек завершился (peer ушёл/свернул), быстро убираем видео
           if (e.track) {
             e.track.onended = () => {
@@ -2064,9 +1959,6 @@
             updateProgress(100, 'Connected!');
             showControls(true);
             setTimeout(() => showProgress(false), 1000);
-            
-            // Запускаем мониторинг качества соединения
-            startQualityMonitoring(peerId);
           } else if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
             console.error(`WebRTC connection failed/disconnected with ${peerId}`);
             showProgress(false);
@@ -2247,6 +2139,7 @@
       }
 
       function hangup() {
+        showProgress(true);
         // Закрываем все соединения с пирами
         for (const [peerId, peer] of peers.entries()) {
           peer.pc.getSenders().forEach(s => s.track && s.track.stop());
@@ -2284,6 +2177,7 @@
         
         // Показываем кнопку создания новой комнаты
         callButtonContainer.style.display = 'flex';
+        setTimeout(() => showProgress(false), 2000);
       }
 
       toggleMicBtn.onclick = () => {
@@ -2388,23 +2282,7 @@
       
       socket.on('signal', handleSignal);
 
-      function leaveRoom() {
-        socket.emit('leave', roomId);
-        hangup();
-        updateRoomInfo('');
-        
-        // Восстанавливаем кнопку Join
-        joinBtn.innerHTML = `
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-          </svg>
-        `;
-        joinBtn.className = 'control-btn join';
-        joinBtn.title = 'Join Room';
-        roomIdInput.disabled = false;
-        clearError();
-        showControls(false);
-      }
+      /* remove dead leaveRoom (несуществующие joinBtn/roomIdInput) */
 
       // Проверяем URL параметры при загрузке
       function checkUrlParams() {
@@ -2448,14 +2326,17 @@
         // Имя спрашиваем теперь только при попытке отправить чат — не блокируем вход
         try {
           console.log(`Joining existing room: ${roomId}`);
+          showProgress(true);
           await getLocalStream();
           socket.emit('join', roomId);
           updateRoomInfo(roomId);
           showControls(true);
           updateParticipantsList();
+          setTimeout(() => showProgress(false), 2000);
         } catch (e) {
           console.error('Failed to join existing room:', e);
           showError(`Failed to join room: ${e.message}`);
+          showProgress(false);
         }
       }
 
@@ -2467,6 +2348,7 @@
         
         try {
           console.log(`Creating new room: ${roomId}`);
+          showProgress(true);
           await getLocalStream();
           socket.emit('join', roomId);
           updateRoomInfo(roomId);
@@ -2474,10 +2356,11 @@
           updateParticipantsList();
           
           // Показываем уведомление о создании комнаты
-          showNotification(`Комната ${roomId} создана!`);
+          setTimeout(() => showProgress(false), 2000);
         } catch (e) {
           console.error('Failed to create room:', e);
           showError(`Failed to create room: ${e.message}`);
+          showProgress(false);
         }
       }
       
@@ -2495,7 +2378,7 @@
       const transBtn = document.getElementById('transBtn');
       confirmNameBtn.onclick = confirmUserName;
       chatSendBtn.onclick = sendChatMessage;
-      chatToggle.onclick = toggleChat;
+      // chat toggle button удалён
       function openSettingsMenu() {
         settingsSubmenu.classList.remove('hiding');
         settingsSubmenu.classList.add('show');
@@ -2520,7 +2403,7 @@
         const clickedInside = settingsBtn.contains(e.target) || settingsSubmenu.contains(e.target);
         if (!clickedInside) closeSettingsMenu();
       });
-      qualityToggle.onclick = () => { cycleVideoQuality(); qualityText.textContent = currentVideoQuality === 'high' ? 'HD+' : currentVideoQuality === 'medium' ? 'SD' : 'LD'; };
+      qualityToggle.onclick = () => { /* качество не меняем динамически */ };
       transBtn.onclick = toggleScreenShare;
       swapCameraBtn.addEventListener('click', swapCamera);
       
@@ -2542,6 +2425,7 @@
       window.addEventListener('load', () => {
         checkUrlParams();
         // Применим начальную раскладку (один участник)
+        showProgress(true);
         // Скрываем чат и шапку на мобильных устройствах
         if (IS_MOBILE) {
         isChatVisible = false;
@@ -2553,6 +2437,10 @@
           if (headerEl) headerEl.style.display = 'none';
         }
         updateVideoGridLayout();
+        // снимем прелоадер через тик — DOM готов
+        setTimeout(() => showProgress(false), 100);
+        recalcTileSize();
+        window.addEventListener('resize', recalcTileSize);
       });
     </script>
   </body>

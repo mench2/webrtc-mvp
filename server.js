@@ -16,6 +16,7 @@ app.use((req, res, next) => {
   next();
 });
 const server = http.createServer(app);
+const VERBOSE_LOGS = process.env.VERBOSE_LOGS === '1' || process.env.VERBOSE_LOGS === 'true';
 const io = new Server(server, {
   cors: { origin: '*', methods: ['GET', 'POST'] }
 });
@@ -140,11 +141,11 @@ io.on('connection', (socket) => {
   initializeUserActivity(socket.id);
 
   socket.on('join', (roomId) => {
-    console.log(`Socket ${socket.id} joining room ${roomId}`);
+    if (VERBOSE_LOGS) console.log(`Socket ${socket.id} joining room ${roomId}`);
     
     // Проверяем лимит комнат
     if (!checkRoomJoinRate(socket.id)) {
-      console.log(`Socket ${socket.id} exceeded room join rate limit`);
+      if (VERBOSE_LOGS) console.log(`Socket ${socket.id} exceeded room join rate limit`);
       socket.emit('error', { message: 'Превышен лимит присоединений к комнатам' });
       return;
     }
@@ -168,16 +169,16 @@ io.on('connection', (socket) => {
 
     // Отправляем новому пиру список всех существующих пиров
     const existingPeers = [...peers].filter(id => id !== socket.id);
-    console.log(`Sending peers list to ${socket.id}:`, existingPeers);
+    if (VERBOSE_LOGS) console.log(`Sending peers list to ${socket.id}:`, existingPeers);
     socket.emit('peers-list', { peers: existingPeers });
 
     // Уведомляем всех существующих пиров о новом участнике
-    console.log(`Notifying room ${roomId} about new peer: ${socket.id}`);
+    if (VERBOSE_LOGS) console.log(`Notifying room ${roomId} about new peer: ${socket.id}`);
     socket.to(roomId).emit('peer-joined', { socketId: socket.id });
   });
 
   socket.on('leave', (roomId) => {
-    console.log(`Socket ${socket.id} leaving room ${roomId}`);
+    if (VERBOSE_LOGS) console.log(`Socket ${socket.id} leaving room ${roomId}`);
     const peers = roomIdToSocketIds.get(roomId);
     if (peers) {
       peers.delete(socket.id);
@@ -189,7 +190,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log(`Socket ${socket.id} disconnected`);
+    if (VERBOSE_LOGS) console.log(`Socket ${socket.id} disconnected`);
     if (currentRoomId) {
       const peers = roomIdToSocketIds.get(currentRoomId);
       if (peers) {
@@ -204,17 +205,17 @@ io.on('connection', (socket) => {
 
   socket.on('signal', ({ to, data }) => {
     if (to) {
-      console.log(`Signal from ${socket.id} to ${to}:`, data.type || 'candidate');
+      if (VERBOSE_LOGS) console.log(`Signal from ${socket.id} to ${to}:`, data.type || 'candidate');
       io.to(to).emit('signal', { from: socket.id, data });
     }
   });
 
   socket.on('set-user-name', ({ userName }) => {
-    console.log(`Socket ${socket.id} set name to: ${userName}`);
+    if (VERBOSE_LOGS) console.log(`Socket ${socket.id} set name to: ${userName}`);
     
     // Проверяем валидность имени
     if (!validateUserName(userName)) {
-      console.log(`Socket ${socket.id} provided invalid username: ${userName}`);
+      if (VERBOSE_LOGS) console.log(`Socket ${socket.id} provided invalid username: ${userName}`);
       socket.emit('error', { message: 'Недопустимое имя пользователя' });
       return;
     }
@@ -231,18 +232,18 @@ io.on('connection', (socket) => {
   });
 
   socket.on('chat-message', ({ author, text, timestamp }) => {
-    console.log(`Chat message from ${socket.id} (${author}): ${text}`);
+    if (VERBOSE_LOGS) console.log(`Chat message from ${socket.id} (${author})`);
     
     // Проверяем валидность сообщения
     if (!validateMessage(text)) {
-      console.log(`Socket ${socket.id} sent invalid message: ${text}`);
+      if (VERBOSE_LOGS) console.log(`Socket ${socket.id} sent invalid message`);
       socket.emit('error', { message: 'Недопустимое сообщение' });
       return;
     }
     
     // Проверяем лимит сообщений
     if (!checkMessageRate(socket.id)) {
-      console.log(`Socket ${socket.id} exceeded message rate limit`);
+      if (VERBOSE_LOGS) console.log(`Socket ${socket.id} exceeded message rate limit`);
       socket.emit('error', { message: 'Превышен лимит сообщений' });
       return;
     }
