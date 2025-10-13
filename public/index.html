@@ -105,7 +105,6 @@
         flex-direction: column;
         padding: 0;
         overflow: hidden;
-        background: #000000;
         padding-bottom: 96px;
       }
       
@@ -408,7 +407,6 @@
       
       .video-container {
         position: relative;
-        background: #000000;
         border-radius: 8px;
         overflow: hidden;
         border: 2px solid transparent;
@@ -420,6 +418,23 @@
         transition: border-color 0.3s ease;
       }
 
+      /* --- СЕРЫЙ КВАДРАТ ДЛЯ ЛОКАЛЬНОГО ВИДЕО ДО ПОДКЛЮЧЕНИЯ --- */
+.video-container.local-video {
+  background: #0f0f0f; /* такой же как placeholder */
+  border: 2px dashed #2a2a2a; /* чтобы выглядел как остальные квадраты */
+  position: relative;
+  overflow: hidden;
+}
+/* Когда видео активируется — убираем иконку и рамку */
+.video-container.local-video video {
+  border: none;
+}
+.video-container.local-video.active::before {
+  display: none;
+}
+.video-container.local-video.active {
+  border: none;
+}
 /* Убираем надпись You на локальном видео */
 .local-video .video-label { display: none; }
       
@@ -470,7 +485,7 @@
         height: 100%;
         object-fit: cover; /* центрирование внутри квадрата */
         object-position: center center;
-        background: #000000;
+        background: transparent;
         border-radius: 8px;
       }
       
