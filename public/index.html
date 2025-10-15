@@ -1257,9 +1257,30 @@
       const chatSendBtn = document.getElementById('chatSendBtn');
       const chatSection = document.getElementById('chatSection');
 
-      // Единая детекция мобильных устройств (используем везде)
+      // Расширенная детекция платформ и браузеров
       const IS_MOBILE = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || window.matchMedia('(max-width: 768px)').matches;
       const IS_ANDROID = /Android/i.test(navigator.userAgent);
+      const IS_IOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+      const IS_SAFARI = /Safari/i.test(navigator.userAgent) && !/Chrome/i.test(navigator.userAgent);
+      const IS_CHROME = /Chrome/i.test(navigator.userAgent);
+      const IS_FIREFOX = /Firefox/i.test(navigator.userAgent);
+      const IS_EDGE = /Edg/i.test(navigator.userAgent);
+      const IS_WINDOWS = /Windows/i.test(navigator.userAgent);
+      const IS_MACOS = /Macintosh|Mac OS X/i.test(navigator.userAgent);
+      const IS_TELEGRAM = window.Telegram && window.Telegram.WebApp;
+      
+      console.log('Platform detection:', {
+        mobile: IS_MOBILE,
+        android: IS_ANDROID,
+        ios: IS_IOS,
+        safari: IS_SAFARI,
+        chrome: IS_CHROME,
+        firefox: IS_FIREFOX,
+        edge: IS_EDGE,
+        windows: IS_WINDOWS,
+        macos: IS_MACOS,
+        telegram: IS_TELEGRAM
+      });
 
       const params = new URLSearchParams(window.location.search);
       const SIGNAL_URL = params.get('signal') || window.location.origin;
@@ -1267,10 +1288,17 @@
         transports: ['websocket'],
         path: '/socket.io',
         withCredentials: true,
-        timeout: 10000,
+        timeout: 15000,
         reconnection: true,
         reconnectionAttempts: Infinity,
         reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        maxReconnectionAttempts: Infinity,
+        forceNew: true,
+        // Дополнительные опции для стабильности
+        autoConnect: true,
+        upgrade: true,
+        rememberUpgrade: false
       });
 
       let roomId = '';
@@ -1793,24 +1821,39 @@
         }
       }
 
+      // Улучшенная конфигурация STUN/TURN серверов для всех платформ
       const stunServers = [
+        // Основные Google STUN серверы (самые стабильные)
         { urls: 'stun:stun.l.google.com:19302' },
         { urls: 'stun:stun1.l.google.com:19302' },
         { urls: 'stun:stun2.l.google.com:19302' },
         { urls: 'stun:stun3.l.google.com:19302' },
         { urls: 'stun:stun4.l.google.com:19302' },
-        // Дополнительные STUN серверы
+        
+        // Дополнительные STUN серверы для лучшего покрытия
         { urls: 'stun:stun.ekiga.net' },
         { urls: 'stun:stun.ideasip.com' },
         { urls: 'stun:stun.schlund.de' },
         { urls: 'stun:stun.stunprotocol.org:3478' },
-        // Более быстрые TURN серверы
+        { urls: 'stun:stun.voiparound.com' },
+        { urls: 'stun:stun.voipbuster.com' },
+        { urls: 'stun:stun.voipstunt.com' },
+        
+        // TURN серверы для NAT traversal (критично для стабильности)
         { urls: 'turn:freeturn.tel:3478', username: 'freeturn', credential: 'freeturn' },
         { urls: 'turn:freeturn.tel:80', username: 'freeturn', credential: 'freeturn' },
         { urls: 'turns:freeturn.tel:443', username: 'freeturn', credential: 'freeturn' },
-        // Резервные openrelay серверы
+        
+        // Резервные TURN серверы
         { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
-        { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' }
+        { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+        { urls: 'turn:openrelay.metered.ca:80?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
+        { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
+        
+        // Дополнительные TURN серверы для iOS/Safari
+        { urls: 'turn:turn.bistri.com:80', username: 'homeo', credential: 'homeo' },
+        { urls: 'turn:turn.bistri.com:443', username: 'homeo', credential: 'homeo' },
+        { urls: 'turn:turn.anyfirewall.com:443?transport=tcp', username: 'webrtc', credential: 'webrtc' }
       ];
 
 
@@ -1845,29 +1888,127 @@
 
       async function getLocalStream(quality = 'medium') {
         try {
-          // Базовые констрейнты без агрессивных проверок
-          const constraints = {
-            audio: true,
-            video: { facingMode: { ideal: 'user' } }
+          // Платформо-специфичные констрейнты
+          let constraints = {
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true,
+              sampleRate: 48000,
+              channelCount: 1
+            },
+            video: {
+              width: { ideal: 1280, max: 1920 },
+              height: { ideal: 720, max: 1080 },
+              frameRate: { ideal: 30, max: 30 },
+              facingMode: { ideal: 'user' }
+            }
           };
+
+          // Специальные настройки для iOS/Safari
+          if (IS_IOS || IS_SAFARI) {
+            constraints.video = {
+              width: { ideal: 640, max: 1280 },
+              height: { ideal: 480, max: 720 },
+              frameRate: { ideal: 24, max: 30 },
+              facingMode: { ideal: 'user' }
+            };
+            constraints.audio = {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true
+            };
+          }
+
+          // Специальные настройки для Android в Telegram
+          if (IS_ANDROID && IS_TELEGRAM) {
+            constraints.video = {
+              width: { ideal: 640, max: 1280 },
+              height: { ideal: 480, max: 720 },
+              frameRate: { ideal: 15, max: 24 },
+              facingMode: { ideal: 'user' }
+            };
+          }
+
+          // Специальные настройки для Firefox
+          if (IS_FIREFOX) {
+            constraints.video = {
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+              frameRate: { ideal: 30 },
+              facingMode: { ideal: 'user' }
+            };
+          }
+
+          // Специальные настройки для Edge
+          if (IS_EDGE) {
+            constraints.video = {
+              width: { ideal: 1280, max: 1920 },
+              height: { ideal: 720, max: 1080 },
+              frameRate: { ideal: 30 },
+              facingMode: { ideal: 'user' }
+            };
+          }
+
+          console.log('Requesting media with platform-specific constraints:', constraints);
           localStream = await navigator.mediaDevices.getUserMedia(constraints);
           
-          localVideo.srcObject = localStream;
+          // Убеждаемся что видео элемент готов
+          if (localVideo) {
+            localVideo.srcObject = localStream;
+            // Принудительно включаем autoplay для мобильных
+            if (IS_MOBILE) {
+              localVideo.muted = true;
+              localVideo.autoplay = true;
+              localVideo.playsInline = true;
+              try {
+                await localVideo.play();
+              } catch (playError) {
+                console.warn('Autoplay failed, will play on user interaction:', playError);
+              }
+            }
+          }
+          
           currentVideoQuality = quality;
           clearError();
           
           // Обновляем состояние кнопок после получения стрима
           updateButtonStates();
           
-          // Упрощаем: без динамической смены качества
+          // Обновляем статус локального видео
+          const localContainer = videosGrid.querySelector('.video-container.local-video');
+          if (localContainer) {
+            localContainer.classList.add('active');
+          }
+          
+          console.log('Local stream obtained successfully');
           
         } catch (e) {
-          // Не блокируем соединение: позволим вкладке быть только «приёмником»
-          showError(`Нет доступа к камере/микрофону: ${e && e.name ? e.name : e}`);
-          console.warn(e);
-          localStream = null;
+          console.error('Failed to get local stream:', e);
           
-          // Обновляем кнопки для состояния без стрима
+          // Fallback для Android - пробуем без видео
+          if (IS_ANDROID && window.Telegram && window.Telegram.WebApp) {
+            try {
+              console.log('Trying audio-only fallback for Android');
+              localStream = await navigator.mediaDevices.getUserMedia({
+                audio: true,
+                video: false
+              });
+              
+              if (localVideo) {
+                localVideo.srcObject = null; // Убираем видео
+              }
+              
+              updateButtonStates();
+              showNotification('Подключен только микрофон (камера недоступна)');
+              return;
+            } catch (audioError) {
+              console.error('Audio fallback also failed:', audioError);
+            }
+          }
+          
+          showError(`Нет доступа к камере/микрофону: ${e && e.name ? e.name : e}`);
+          localStream = null;
           updateButtonStates();
         }
       }
@@ -1955,16 +2096,42 @@
       }
 
       function createPeerConnection(peerId) {
-        const pc = new RTCPeerConnection({ 
+        // Платформо-специфичная конфигурация WebRTC
+        let config = {
           iceServers: [...stunServers],
           iceCandidatePoolSize: 10,
           bundlePolicy: 'max-bundle',
           rtcpMuxPolicy: 'require',
           iceTransportPolicy: 'all',
-          iceConnectionReceivingTimeout: 10000,
-          iceBackupCandidatePairPingInterval: 1000,
-          continualGatheringPolicy: 'gather_continually'
-        });
+          iceConnectionReceivingTimeout: 20000,
+          iceBackupCandidatePairPingInterval: 2000,
+          continualGatheringPolicy: 'gather_continually',
+          sdpSemantics: 'unified-plan',
+          iceGatheringTimeout: 15000
+        };
+
+        // Специальные настройки для iOS/Safari
+        if (IS_IOS || IS_SAFARI) {
+          config.iceCandidatePoolSize = 5; // Меньше кандидатов для iOS
+          config.iceConnectionReceivingTimeout = 25000; // Больше времени для iOS
+          config.iceGatheringTimeout = 20000;
+        }
+
+        // Специальные настройки для Android/Telegram
+        if (IS_ANDROID && IS_TELEGRAM) {
+          config.iceCandidatePoolSize = 8;
+          config.iceConnectionReceivingTimeout = 18000;
+        }
+
+        // Специальные настройки для Firefox
+        if (IS_FIREFOX) {
+          config.iceCandidatePoolSize = 12;
+          config.iceConnectionReceivingTimeout = 22000;
+        }
+
+        console.log(`Creating peer connection for ${peerId} with config:`, config);
+        
+        const pc = new RTCPeerConnection(config);
         const remoteStream = new MediaStream();
         
         pc.onicecandidate = (e) => {
@@ -2001,10 +2168,31 @@
             updateProgress(100, 'Connected!');
             showControls(true);
             setTimeout(() => showProgress(false), 1000);
-          } else if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
-            console.error(`WebRTC connection failed/disconnected with ${peerId}`);
+          } else if (pc.connectionState === 'failed') {
+            console.error(`WebRTC connection failed with ${peerId} - attempting restart`);
             showProgress(false);
-            // Не удаляем пира сразу, возможно это временная проблема
+            
+            // Автоматический перезапуск соединения
+            setTimeout(async () => {
+              if (peers.has(peerId)) {
+                console.log(`Attempting to restart connection with ${peerId}`);
+                try {
+                  await callPeerWithRetry(peerId, 2); // Меньше попыток для перезапуска
+                } catch (error) {
+                  console.error(`Failed to restart connection with ${peerId}:`, error);
+                  removePeer(peerId);
+                }
+              }
+            }, 3000);
+          } else if (pc.connectionState === 'disconnected') {
+            console.warn(`WebRTC connection disconnected with ${peerId}`);
+            // Даем время на восстановление
+            setTimeout(() => {
+              if (peers.has(peerId) && peer.pc.connectionState === 'disconnected') {
+                console.log(`Connection still disconnected with ${peerId}, removing peer`);
+                removePeer(peerId);
+              }
+            }, 5000);
           }
         };
         
@@ -2119,7 +2307,32 @@
           console.log(`Offer sent to ${peerId}`);
         } catch (error) {
           console.error(`Error calling peer ${peerId}:`, error);
+          throw error;
         }
+      }
+
+      // Функция для повторных попыток подключения
+      async function callPeerWithRetry(peerId, maxRetries = 3) {
+        let attempts = 0;
+        
+        while (attempts < maxRetries) {
+          try {
+            await callPeer(peerId);
+            console.log(`Successfully called peer ${peerId} on attempt ${attempts + 1}`);
+            return;
+          } catch (error) {
+            attempts++;
+            console.warn(`Failed to call peer ${peerId} on attempt ${attempts}:`, error);
+            
+            if (attempts < maxRetries) {
+              const delay = Math.pow(2, attempts) * 1000; // экспоненциальная задержка
+              console.log(`Retrying in ${delay}ms...`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+            }
+          }
+        }
+        
+        console.error(`Failed to call peer ${peerId} after ${maxRetries} attempts`);
       }
 
       async function call() {
@@ -2153,10 +2366,38 @@
         if (data.sdp) {
           console.log(`Processing SDP from ${from}:`, data.sdp.type);
           try {
-            await peer.pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-            if (data.sdp.type === 'offer') {
+            // Улучшенная обработка SDP для разных платформ
+            let sdp = data.sdp;
+            
+            // Специальная обработка для iOS/Safari
+            if (IS_IOS || IS_SAFARI) {
+              // Убираем проблемные кодеки для iOS
+              sdp.sdp = sdp.sdp.replace(/a=fmtp:111 profile-level-id=42e01f[\r\n]/g, '');
+            }
+            
+            // Специальная обработка для Firefox
+            if (IS_FIREFOX) {
+              // Добавляем совместимость с Firefox
+              sdp.sdp = sdp.sdp.replace(/a=fmtp:111/g, 'a=fmtp:111 profile-level-id=42e01f');
+            }
+            
+            await peer.pc.setRemoteDescription(new RTCSessionDescription(sdp));
+            if (sdp.type === 'offer') {
               console.log(`Creating answer for ${from}`);
-              const answer = await peer.pc.createAnswer();
+              
+              // Платформо-специфичные настройки для answer
+              let answerOptions = {};
+              if (IS_IOS || IS_SAFARI) {
+                answerOptions.voiceActivityDetection = false;
+              }
+              
+              const answer = await peer.pc.createAnswer(answerOptions);
+              
+              // Дополнительная обработка SDP для iOS
+              if (IS_IOS || IS_SAFARI) {
+                answer.sdp = answer.sdp.replace(/a=fmtp:111 profile-level-id=42e01f[\r\n]/g, '');
+              }
+              
               await peer.pc.setLocalDescription(answer);
               socket.emit('signal', { to: from, data: { sdp: peer.pc.localDescription } });
               console.log(`Answer sent to ${from}`);
@@ -2182,22 +2423,71 @@
 
       function hangup() {
         showProgress(true);
+        
+        // Специальная обработка для iOS - правильное завершение медиа-стрима
+        if (IS_IOS || IS_SAFARI) {
+          console.log('iOS/Safari detected - using special cleanup for microphone');
+          
+          // Сначала останавливаем все аудио треки правильно
+          if (localStream) {
+            const audioTracks = localStream.getAudioTracks();
+            audioTracks.forEach(track => {
+              console.log('Stopping audio track:', track.label);
+              track.stop();
+              // Принудительно освобождаем ресурсы
+              track.enabled = false;
+            });
+          }
+          
+          // Затем видео треки
+          if (localStream) {
+            const videoTracks = localStream.getVideoTracks();
+            videoTracks.forEach(track => {
+              console.log('Stopping video track:', track.label);
+              track.stop();
+              track.enabled = false;
+            });
+          }
+          
+          // Ждем немного перед продолжением для iOS
+          setTimeout(() => {
+            continueHangup();
+          }, 500);
+        } else {
+          continueHangup();
+        }
+      }
+
+      function continueHangup() {
         // Закрываем все соединения с пирами
         for (const [peerId, peer] of peers.entries()) {
-          peer.pc.getSenders().forEach(s => s.track && s.track.stop());
+          peer.pc.getSenders().forEach(s => {
+            if (s.track) {
+              console.log('Stopping track in peer connection:', s.track.kind);
+              s.track.stop();
+            }
+          });
           peer.pc.close();
           removeRemoteVideoElement(peerId);
         }
         peers.clear();
         userNames.clear();
         
-        // Останавливаем локальный стрим
+        // Останавливаем локальный стрим (если еще не остановлен)
         if (localStream) {
-          localStream.getTracks().forEach(track => track.stop());
+          localStream.getTracks().forEach(track => {
+            if (track.readyState !== 'ended') {
+              track.stop();
+            }
+          });
           localStream = null;
         }
-        // Сбрасываем источник видео, чтобы не было чёрного поля
-        if (localVideo) localVideo.srcObject = null;
+        
+        // Сбрасываем источник видео
+        if (localVideo) {
+          localVideo.srcObject = null;
+          localVideo.pause(); // Дополнительная очистка для iOS
+        }
         
         // Останавливаем демонстрацию экрана
         if (screenStream) {
@@ -2220,12 +2510,31 @@
         // Показываем кнопку создания новой комнаты
         callButtonContainer.style.display = 'flex';
         setTimeout(() => showProgress(false), 2000);
+        
+        // Специальное уведомление для iOS
+        if (IS_IOS || IS_SAFARI) {
+          showNotification('Звонок завершен. Микрофон освобожден.');
+        }
       }
 
-      toggleMicBtn.onclick = () => {
+      toggleMicBtn.onclick = async () => {
         if (!localStream) {
-          getLocalStream();
-          return;
+          try {
+            await getLocalStream();
+            // После получения стрима обновляем все соединения
+            if (localStream) {
+              for (const [peerId, peer] of peers.entries()) {
+                const audioSender = peer.pc.getSenders().find(s => s.track && s.track.kind === 'audio');
+                if (audioSender && localStream.getAudioTracks()[0]) {
+                  await audioSender.replaceTrack(localStream.getAudioTracks()[0]);
+                }
+              }
+            }
+            return;
+          } catch (error) {
+            console.error('Failed to get stream:', error);
+            return;
+          }
         }
         
         const audioTracks = localStream.getAudioTracks();
@@ -2239,10 +2548,24 @@
         updateParticipantsList();
       };
       
-      toggleCamBtn.onclick = () => {
+      toggleCamBtn.onclick = async () => {
         if (!localStream) {
-          getLocalStream();
-          return;
+          try {
+            await getLocalStream();
+            // После получения стрима обновляем все соединения
+            if (localStream) {
+              for (const [peerId, peer] of peers.entries()) {
+                const videoSender = peer.pc.getSenders().find(s => s.track && s.track.kind === 'video');
+                if (videoSender && localStream.getVideoTracks()[0]) {
+                  await videoSender.replaceTrack(localStream.getVideoTracks()[0]);
+                }
+              }
+            }
+            return;
+          } catch (error) {
+            console.error('Failed to get stream:', error);
+            return;
+          }
         }
         
         const videoTracks = localStream.getVideoTracks();
@@ -2286,12 +2609,12 @@
         console.log('Our socket ID:', socket.id);
         addPeer(socketId);
         
-        // Новый пир инициирует звонок — чтобы избежать двойных звонков и фантомного реконнекта
+        // Новый пир инициирует звонок с несколькими попытками
         setTimeout(async () => {
           console.log(`Initiator check for new peer ${socketId}: we call if our id < theirs`);
           if (peers.has(socketId) && socket.id < socketId) {
             console.log(`Calling new peer ${socketId}`);
-            await callPeer(socketId);
+            await callPeerWithRetry(socketId);
           }
         }, 1000);
       });
@@ -2369,12 +2692,23 @@
         try {
           console.log(`Joining existing room: ${roomId}`);
           showProgress(true);
-          await getLocalStream();
+          
+          // Пробуем получить стрим, но не блокируем подключение если не получается
+          try {
+            await getLocalStream();
+            console.log('Local stream obtained successfully');
+          } catch (streamError) {
+            console.warn('Failed to get local stream, continuing without it:', streamError);
+            // Продолжаем без стрима - можно будет подключиться как слушатель
+          }
+          
           socket.emit('join', roomId);
           updateRoomInfo(roomId);
           showControls(true);
           updateParticipantsList();
-          setTimeout(() => showProgress(false), 2000);
+          
+          // Показываем прогресс дольше для стабильности
+          setTimeout(() => showProgress(false), 3000);
         } catch (e) {
           console.error('Failed to join existing room:', e);
           showError(`Failed to join room: ${e.message}`);
@@ -2483,6 +2817,58 @@
         setTimeout(() => showProgress(false), 100);
         recalcTileSize();
         window.addEventListener('resize', recalcTileSize);
+
+        // Специальная обработка для Telegram Mini App на всех платформах
+        if (IS_TELEGRAM) {
+          console.log('Telegram Mini App detected on platform:', {
+            android: IS_ANDROID,
+            ios: IS_IOS,
+            safari: IS_SAFARI
+          });
+          
+          // Принудительно включаем камеру при первом взаимодействии
+          let firstInteraction = true;
+          
+          const tryActivateCamera = async (source) => {
+            if (firstInteraction && !localStream) {
+              firstInteraction = false;
+              console.log(`${source} detected, attempting to get camera access`);
+              try {
+                await getLocalStream();
+                showNotification('Камера активирована');
+              } catch (error) {
+                console.warn(`Failed to get camera on ${source}:`, error);
+              }
+            }
+          };
+
+          // Обработка тапов для мобильных устройств
+          if (IS_MOBILE) {
+            document.addEventListener('touchstart', () => tryActivateCamera('touch'), { once: true });
+          }
+
+          // Обработка кликов на кнопки для всех платформ
+          const buttons = document.querySelectorAll('button');
+          buttons.forEach(btn => {
+            btn.addEventListener('click', () => tryActivateCamera('button click'), { once: true });
+          });
+
+          // Специальная обработка для iOS в Telegram
+          if (IS_IOS) {
+            // Дополнительная активация при изменении видимости страницы
+            document.addEventListener('visibilitychange', async () => {
+              if (!document.hidden && !localStream) {
+                setTimeout(() => tryActivateCamera('visibility change'), 100);
+              }
+            });
+          }
+
+          // Специальная обработка для Android в Telegram
+          if (IS_ANDROID) {
+            // Активация при фокусе на странице
+            window.addEventListener('focus', () => tryActivateCamera('window focus'));
+          }
+        }
       });
     </script>
   </body>
